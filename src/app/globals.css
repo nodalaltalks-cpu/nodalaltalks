@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────
+   NoDalalTalks design tokens — the single source of truth for color/elevation.
+   Values copied exactly from the approved prototypes. Tailwind (tailwind.config.ts)
+   references these variables; never hardcode hex values in components.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --ink: #0a0f1e;
+  --ink-2: #1c2438;
+  --ink-3: #2d3650;
+  --amber: #f59e0b;
+  --amber-2: #fbbf24;
+  --amber-pale: #fffbeb;
+  --teal: #0ea5e9;
+  --rose: #f43f5e;
+  --green: #10b981;
+  --violet: #8b5cf6;
+  --surface: #f8f9fc;
+  --surface-2: #eef1f8;
+  --soft: #94a3b8;
+
+  /* shadcn/ui semantic tokens, mapped onto the brand */
+  --background: #f8f9fc;
+  --foreground: #0a0f1e;
+  --card: #ffffff;
+  --card-foreground: #0a0f1e;
+  --popover: #ffffff;
+  --popover-foreground: #0a0f1e;
+  --primary: #0a0f1e;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f8;
+  --secondary-foreground: #1c2438;
+  --muted: #64748b;
+  --muted-foreground: #64748b;
+  --accent: #f59e0b;
+  --accent-foreground: #0a0f1e;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --border: rgba(10, 15, 30, 0.09);
+  --border-2: rgba(10, 15, 30, 0.14);
+  --input: rgba(10, 15, 30, 0.14);
+  --ring: #f59e0b;
+}
+
+* {
+  border-color: var(--border);
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  line-height: 1.12;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-3);
+  border-radius: 3px;
+}
