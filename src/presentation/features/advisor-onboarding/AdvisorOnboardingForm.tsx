@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   advisorOnboardingSchema,
@@ -190,7 +190,7 @@ export function AdvisorOnboardingForm() {
               <Field label="Maximum calls per day">
                 <RadioRow>
                   {O.MAX_CALLS.map((m) => (
-                    <RadioCard key={m.value} value={m.value} label={m.label} {...register("personal.maxCallsPerDay")} />
+                    <RadioCard key={m.value} value={m.value} label={m.label} field={register("personal.maxCallsPerDay")} />
                   ))}
                 </RadioRow>
               </Field>
@@ -231,7 +231,7 @@ export function AdvisorOnboardingForm() {
               <Field label="Property Type" required>
                 <RadioRow wrap>
                   {O.PROPERTY_TYPES.map((p) => (
-                    <RadioCard key={p.value} value={p.value} label={p.label} {...register("property.propertyType")} />
+                    <RadioCard key={p.value} value={p.value} label={p.label} field={register("property.propertyType")} />
                   ))}
                 </RadioRow>
               </Field>
@@ -272,7 +272,7 @@ export function AdvisorOnboardingForm() {
               <Field label="Current Possession Status" required>
                 <RadioRow wrap>
                   {O.POSSESSION.map((p) => (
-                    <RadioCard key={p.value} value={p.value} label={p.label} {...register("property.possessionStatus")} />
+                    <RadioCard key={p.value} value={p.value} label={p.label} field={register("property.possessionStatus")} />
                   ))}
                 </RadioRow>
               </Field>
@@ -283,7 +283,7 @@ export function AdvisorOnboardingForm() {
               <Field label="Home Loan Taken?">
                 <RadioRow wrap>
                   {O.HOME_LOAN.map((h) => (
-                    <RadioCard key={h.value} value={h.value} label={h.label} {...register("property.homeLoan")} />
+                    <RadioCard key={h.value} value={h.value} label={h.label} field={register("property.homeLoan")} />
                   ))}
                 </RadioRow>
               </Field>
@@ -520,19 +520,24 @@ function RadioRow({ children, wrap }: { children: React.ReactNode; wrap?: boolea
   return <div className={cn("grid gap-2", wrap ? "sm:grid-cols-2" : "sm:grid-cols-3")}>{children}</div>;
 }
 
-const RadioCard = ({
+function RadioCard({
   value,
   label,
-  ...register
-}: { value: string; label: string } & React.InputHTMLAttributes<HTMLInputElement>) => {
-  const id = `${register.name}-${value}`;
+  field,
+}: {
+  value: string;
+  label: string;
+  field: UseFormRegisterReturn;
+}) {
+  const id = `${field.name}-${value}`;
   return (
     <label
       htmlFor={id}
       className="flex cursor-pointer items-center gap-3 rounded-[10px] border-2 border-[color:var(--border-2)] px-4 py-3 text-sm font-medium text-ink transition-all has-[:checked]:border-amber has-[:checked]:bg-amber-pale hover:border-amber-2"
     >
-      <input id={id} type="radio" value={value} className="sr-only" {...register} />
+      {/* Spread on the host <input> so RHF's ref attaches correctly. */}
+      <input id={id} type="radio" value={value} className="sr-only" {...field} />
       {label}
     </label>
   );
-};
+}
