@@ -24,8 +24,9 @@ export function readFirebaseWebConfig(): FirebaseWebConfig {
   };
 }
 
-/** Connect the client SDK to the Local Emulator Suite during development. */
-export function useEmulators(): boolean {
+/** Connect the client SDK to the Local Emulator Suite during development.
+ *  (Not a React hook — named with a non-"use" prefix to avoid hook lint rules.) */
+export function shouldUseEmulators(): boolean {
   return process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
 }
 

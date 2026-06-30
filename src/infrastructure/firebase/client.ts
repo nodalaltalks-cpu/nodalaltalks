@@ -10,7 +10,7 @@ import {
   connectStorageEmulator,
   getStorage,
 } from "firebase/storage";
-import { readFirebaseWebConfig, useEmulators } from "./env";
+import { readFirebaseWebConfig, shouldUseEmulators } from "./env";
 
 /**
  * Lazily initializes the Firebase client SDK exactly once and wires the Local
@@ -36,7 +36,7 @@ export function getFirebaseClient(): FirebaseClient {
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-  if (useEmulators() && !emulatorsConnected) {
+  if (shouldUseEmulators() && !emulatorsConnected) {
     // Guarded so HMR / repeated calls don't re-connect and throw.
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8080);
