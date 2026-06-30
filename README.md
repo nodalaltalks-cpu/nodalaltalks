@@ -83,7 +83,11 @@ src/
   hook (the React `track()` for search / profile-view / shortlist / OTP events),
   `UserRepository` + active-advisor discovery, and the buyer UI (signup, search,
   advisor profile) on the approved design. Wallet/calls/reviews land in Phase 2.
-- Feature 6 — Founder Dashboard (live, projections) _(next)_
+- **Feature 6 — Founder Dashboard (live) ✅**: a `useMetrics` hook subscribing to
+  the event log → the same `project()` reducer → six derived sections (Executive,
+  Marketplace, Growth/AARRR, Buyers, Revenue, Trust). Zero hardcoded values;
+  founder/admin guard. With `EVENT_BACKEND=firestore` it's a real-time onSnapshot.
+- Phase 2 — Wallet · Calls · Reviews (PaymentGateway + CallService adapters) _(next)_
 
 ### Firebase emulators
 
