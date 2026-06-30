@@ -107,6 +107,14 @@ service cloud.firestore {
       allow write: if false; // Admin SDK only
     }
 
+    // ── payout_accounts: PRIVATE bank details. Owner advisor + staff only;
+    //    never exposed on the public advisor profile. ──
+    match /payout_accounts/{advisorId} {
+      allow read: if isSelf(advisorId) || isStaff();
+      allow create, update: if isSelf(advisorId);
+      allow delete: if isAdmin();
+    }
+
     // ── reviews: public read; buyer creates once; immutable thereafter. ──
     match /reviews/{reviewId} {
       allow read: if true;

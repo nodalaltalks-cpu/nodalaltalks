@@ -13,6 +13,7 @@ export const COLLECTIONS = {
   CALLS: "calls",
   WALLETS: "wallets",
   TRANSACTIONS: "transactions",
+  PAYOUT_ACCOUNTS: "payout_accounts",
   REVIEWS: "reviews",
   ANALYTICS_EVENTS: "analytics_events",
   ACTIVITY_LOGS: "activity_logs",

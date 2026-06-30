@@ -65,7 +65,14 @@ src/
   Firestore + in-memory `EventRepository` adapters with an env-driven factory,
   system adapters (clock/id/session), React providers (Auth + Query), and
   production `firestore.rules` / `storage.rules` + emulator config.
-- Feature 3 — Advisor Onboarding (live) _(next)_
+- **Feature 3 — Advisor Onboarding (live) ✅**: Zod schema (single source for the
+  5-step form), `submitAdvisorApplication` use case (writes advisor_profiles +
+  properties + documents + private payout_accounts, uploads files, emits
+  advisor_signup_started / document_uploaded / advisor_rate_set / advisor_submitted),
+  `StorageService` port + Firebase adapter, Firestore repository adapters, a
+  composition root, a TanStack Query mutation hook, and the onboarding UI rebuilt
+  as React components on the approved design.
+- Feature 4 — Documents Dashboard (live) _(next)_
 
 ### Firebase emulators
 
