@@ -1,12 +1,16 @@
 import {
   type Firestore,
+  collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import type { AdvisorProfileRepository } from "@core/application/ports";
-import type { AdvisorProfile } from "@core/domain/entities";
+import type { AdvisorProfile, AdvisorStatus } from "@core/domain/entities";
 import { COLLECTIONS } from "../firebase/collections";
 import { pruneUndefined } from "../firebase/doc-helpers";
 
@@ -34,5 +38,16 @@ export class FirestoreAdvisorProfileRepository
       this.ref(advisorId),
       pruneUndefined({ ...patch, updatedAt: Date.now() }),
     );
+  }
+
+  async listByStatus(statuses: AdvisorStatus[]): Promise<AdvisorProfile[]> {
+    if (statuses.length === 0) return [];
+    const snap = await getDocs(
+      query(
+        collection(this.db, COLLECTIONS.ADVISOR_PROFILES),
+        where("status", "in", statuses.slice(0, 10)),
+      ),
+    );
+    return snap.docs.map((d) => d.data() as AdvisorProfile);
   }
 }

@@ -72,7 +72,13 @@ src/
   `StorageService` port + Firebase adapter, Firestore repository adapters, a
   composition root, a TanStack Query mutation hook, and the onboarding UI rebuilt
   as React components on the approved design.
-- Feature 4 — Documents Dashboard (live) _(next)_
+- **Feature 4 — Documents Dashboard (live) ✅**: verification use cases
+  (startVerification / decideDocument / activateAdvisor / rejectAdvisor) with a
+  KYC-style required-document checklist gating activation; role elevation only
+  via a guarded server route (`/api/admin/set-role`) using the Admin SDK; live
+  verifier queue with SLA aging + review workbench; an immutable event audit
+  trail for every decision.
+- Feature 5 — Buyer Flow (live) _(next)_
 
 ### Firebase emulators
 

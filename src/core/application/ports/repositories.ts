@@ -1,5 +1,6 @@
 import type {
   AdvisorProfile,
+  AdvisorStatus,
   Property,
   VerificationDocument,
 } from "../../domain/entities";
@@ -14,6 +15,8 @@ export interface AdvisorProfileRepository {
   create(profile: AdvisorProfile): Promise<void>;
   get(advisorId: string): Promise<AdvisorProfile | null>;
   update(advisorId: string, patch: Partial<AdvisorProfile>): Promise<void>;
+  /** Verification queue feed — advisors in the given lifecycle states. */
+  listByStatus(statuses: AdvisorStatus[]): Promise<AdvisorProfile[]>;
 }
 
 export interface PropertyRepository {
