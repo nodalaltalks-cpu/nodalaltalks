@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit as fsLimit,
   query,
   setDoc,
   updateDoc,
@@ -49,5 +50,19 @@ export class FirestoreAdvisorProfileRepository
       ),
     );
     return snap.docs.map((d) => d.data() as AdvisorProfile);
+  }
+
+  async listActive(max = 50): Promise<AdvisorProfile[]> {
+    // Filter on status only (no composite index needed); rank client-side.
+    const snap = await getDocs(
+      query(
+        collection(this.db, COLLECTIONS.ADVISOR_PROFILES),
+        where("status", "==", "active"),
+        fsLimit(max),
+      ),
+    );
+    return snap.docs
+      .map((d) => d.data() as AdvisorProfile)
+      .sort((a, b) => b.ratingAvg - a.ratingAvg);
   }
 }

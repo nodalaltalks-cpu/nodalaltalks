@@ -67,6 +67,7 @@ function setup(docs: VerificationDocument[]) {
       update: async (id, patch) =>
         void profiles.set(id, { ...profiles.get(id)!, ...patch }),
       listByStatus: async () => [...profiles.values()],
+      listActive: async () => [...profiles.values()],
     },
     documents: {
       create: async () => {},

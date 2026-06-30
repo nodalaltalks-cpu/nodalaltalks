@@ -31,6 +31,8 @@ function makeDeps() {
       create: async (p) => void advisorsStore.set(p.advisorId, p),
       get: async (id) => advisorsStore.get(id) ?? null,
       update: async () => {},
+      listByStatus: async () => [...advisorsStore.values()],
+      listActive: async () => [...advisorsStore.values()],
     },
     properties: {
       create: async (p) => void propsStore.push(p),

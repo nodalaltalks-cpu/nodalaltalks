@@ -1,6 +1,8 @@
 import type { SubmitAdvisorApplicationDeps } from "@core/application/use-cases/submit-advisor-application";
 import type { VerificationDeps } from "@core/application/use-cases/verification";
+import type { RegisterBuyerDeps } from "@core/application/use-cases/register-buyer";
 import type { RoleClaimService } from "@core/application/ports";
+import { FirestoreUserRepository } from "./repositories/firestore-user-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -47,6 +49,18 @@ export function buildVerificationDeps(): VerificationDeps & {
     ids: idGenerator,
     session: sessionProvider,
     roleClaims: new HttpRoleClaimService(),
+  };
+}
+
+/** Deps for completing buyer signup (writes users/{uid} + emits buyer_signup). */
+export function buildBuyerDeps(): RegisterBuyerDeps {
+  const { db } = getFirebaseClient();
+  return {
+    users: new FirestoreUserRepository(db),
+    events: getEventRepository(),
+    clock: systemClock,
+    ids: idGenerator,
+    session: sessionProvider,
   };
 }
 

@@ -78,7 +78,12 @@ src/
   via a guarded server route (`/api/admin/set-role`) using the Admin SDK; live
   verifier queue with SLA aging + review workbench; an immutable event audit
   trail for every decision.
-- Feature 5 — Buyer Flow (live) _(next)_
+- **Feature 5 — Buyer Flow (live) ✅**: phone-OTP signup → `registerBuyer` use
+  case (writes users/{uid} + emits buyer_signup with demand intent), a `useTrack`
+  hook (the React `track()` for search / profile-view / shortlist / OTP events),
+  `UserRepository` + active-advisor discovery, and the buyer UI (signup, search,
+  advisor profile) on the approved design. Wallet/calls/reviews land in Phase 2.
+- Feature 6 — Founder Dashboard (live, projections) _(next)_
 
 ### Firebase emulators
 

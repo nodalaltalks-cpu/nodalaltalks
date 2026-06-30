@@ -2,8 +2,15 @@ import type {
   AdvisorProfile,
   AdvisorStatus,
   Property,
+  User,
   VerificationDocument,
 } from "../../domain/entities";
+
+export interface UserRepository {
+  create(user: User): Promise<void>;
+  get(uid: string): Promise<User | null>;
+  update(uid: string, patch: Partial<User>): Promise<void>;
+}
 
 /**
  * Read-model repository ports. Each abstracts a Firestore collection so use
@@ -17,6 +24,8 @@ export interface AdvisorProfileRepository {
   update(advisorId: string, patch: Partial<AdvisorProfile>): Promise<void>;
   /** Verification queue feed — advisors in the given lifecycle states. */
   listByStatus(statuses: AdvisorStatus[]): Promise<AdvisorProfile[]>;
+  /** Public discovery feed — active advisors, highest-rated first. */
+  listActive(max?: number): Promise<AdvisorProfile[]>;
 }
 
 export interface PropertyRepository {

@@ -4,6 +4,7 @@ export type { AuthService, AuthUser, OtpChallenge } from "./auth-service";
 export type { StorageService, StoredFile } from "./storage-service";
 export type { RoleClaimService } from "./role-claim-service";
 export type {
+  UserRepository,
   AdvisorProfileRepository,
   PropertyRepository,
   DocumentRepository,
