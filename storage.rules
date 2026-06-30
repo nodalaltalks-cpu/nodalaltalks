@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NoDalalTalks — Cloud Storage Security Rules
+//   • Verification documents are PRIVATE (owner advisor + staff).
+//   • Profile photos are public-read (they appear on advisor cards).
+//   • Call recordings are server-written and staff-read (the trust corpus).
+//   • File size + content-type are enforced at the edge.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+    function role()       { return isSignedIn() ? request.auth.token.role : null; }
+    function isStaff()    { return role() in ['verifier', 'founder', 'admin']; }
+    function isSelf(uid)  { return isSignedIn() && request.auth.uid == uid; }
+
+    // Ownership / identity / bank proofs — private.
+    match /documents/{advisorId}/{allPaths=**} {
+      allow read: if isSelf(advisorId) || isStaff();
+      allow write: if isSelf(advisorId)
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*|application/pdf');
+    }
+
+    // Public advisor profile photos.
+    match /advisor_photos/{advisorId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSelf(advisorId)
+                   && request.resource.size < 3 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Call recordings — written by the server only, read by staff.
+    match /recordings/{callId}/{allPaths=**} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

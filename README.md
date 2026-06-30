@@ -58,9 +58,23 @@ src/
 
 ## Build status
 
-- **Feature 1 — Foundation + Event Core ✅** (this commit): scaffold, design system,
-  typed event taxonomy + `project()` reducer with parity tests, port interfaces.
-- Feature 2 — Firebase + Auth + Security Rules _(next)_
+- **Feature 1 — Foundation + Event Core ✅**: scaffold, design system, typed
+  event taxonomy + `project()` reducer with parity tests, port interfaces.
+- **Feature 2 — Firebase + Auth + Security Rules ✅**: domain entities for every
+  collection, `AuthService` port + Firebase adapter (role custom claims),
+  Firestore + in-memory `EventRepository` adapters with an env-driven factory,
+  system adapters (clock/id/session), React providers (Auth + Query), and
+  production `firestore.rules` / `storage.rules` + emulator config.
+- Feature 3 — Advisor Onboarding (live) _(next)_
+
+### Firebase emulators
+
+```bash
+npm i -g firebase-tools          # one-time
+firebase emulators:start         # Auth :9099 · Firestore :8080 · Storage :9199 · UI :4000
+```
+Rules live in `firestore.rules` / `storage.rules`; config in `firebase.json`.
+The `demo-` project id lets the emulator run with no real Firebase project.
 
 Development order follows the MVP Execution Blueprint: Sprint 1 (Firebase, Auth,
 Onboarding, Documents, Founder Dashboard) → Sprint 2 (Wallet, Calls, Reviews) →

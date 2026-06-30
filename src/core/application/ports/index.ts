@@ -1,5 +1,6 @@
 export type { EventRepository, EventQuery } from "./event-repository";
 export type { Clock, IdGenerator, SessionProvider } from "./system";
+export type { AuthService, AuthUser, OtpChallenge } from "./auth-service";
 export type {
   PaymentGateway,
   CreateOrderInput,

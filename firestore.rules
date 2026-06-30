@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NoDalalTalks — Firestore Security Rules
+//
+// Principles:
+//   • Roles come from the Auth custom claim `role` (buyer/advisor/verifier/
+//     founder/admin). advisor & staff roles are assigned SERVER-SIDE only.
+//   • The event log (analytics_events) is APPEND-ONLY for everyone — no update,
+//     no delete, ever. It is the single source of truth.
+//   • Money lives in wallets/transactions and is SERVER-OWNED — clients may read
+//     their own but never write (balance integrity).
+//   • Each role can touch only what it is permitted to.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function role()       { return isSignedIn() ? request.auth.token.role : null; }
+    function isStaff()    { return role() in ['verifier', 'founder', 'admin']; }
+    function isAdmin()    { return role() in ['founder', 'admin']; }
+    function isSelf(uid)  { return isSignedIn() && request.auth.uid == uid; }
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // ── users: identity. Self-signup as buyer only; role/status are protected. ──
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow create: if isSelf(uid)
+                    && request.resource.data.role == 'buyer'
+                    && request.resource.data.status == 'active';
+      allow update: if (isSelf(uid) && unchanged('role') && unchanged('status'))
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── advisor_profiles: public when active; verification fields are staff-only. ──
+    match /advisor_profiles/{advisorId} {
+      allow read: if resource.data.status == 'active' || isSelf(advisorId) || isStaff();
+      allow create: if isSelf(advisorId)
+                    && request.resource.data.status in ['draft', 'submitted']
+                    && request.resource.data.ownershipVerified == false;
+      allow update: if isStaff()
+                    // advisor edits own profile but cannot self-verify or self-rate
+                    || (isSelf(advisorId)
+                        && unchanged('ownershipVerified')
+                        && unchanged('verifierId')
+                        && unchanged('ratingAvg')
+                        && unchanged('ratingCount')
+                        && request.resource.data.status in ['draft', 'submitted', 'under_review'])
+                    // advisor may submit for review: draft -> submitted
+                    || (isSelf(advisorId)
+                        && resource.data.status == 'draft'
+                        && request.resource.data.status == 'submitted');
+      allow delete: if isAdmin();
+    }
+
+    // ── properties: power public advisor cards; owned by the advisor. ──
+    match /properties/{propertyId} {
+      allow read: if isSignedIn();
+      allow create: if isStaff()
+                    || (isSignedIn() && request.resource.data.advisorId == request.auth.uid);
+      allow update: if isStaff()
+                    || (isSignedIn() && resource.data.advisorId == request.auth.uid);
+      allow delete: if isAdmin()
+                    || (isSignedIn() && resource.data.advisorId == request.auth.uid);
+    }
+
+    // ── documents: sensitive. Owner + staff read; only staff set decisions. ──
+    match /documents/{docId} {
+      allow read: if isSelf(resource.data.advisorId) || isStaff();
+      allow create: if isSelf(request.resource.data.advisorId)
+                    && request.resource.data.status in ['uploaded', 'pending_upload'];
+      allow update: if isStaff()
+                    || (isSelf(resource.data.advisorId)
+                        && unchanged('reviewerId')
+                        && request.resource.data.status in ['uploaded', 'pending_upload', 'needs_reupload']);
+      allow delete: if isStaff() || isSelf(resource.data.advisorId);
+    }
+
+    // ── calls: visible to participants + staff. Buyer initiates a request. ──
+    match /calls/{callId} {
+      function isParticipant() {
+        return isSignedIn()
+          && (request.auth.uid == resource.data.buyerId
+              || request.auth.uid == resource.data.advisorId);
+      }
+      allow read: if isParticipant() || isStaff();
+      allow create: if isSignedIn()
+                    && request.resource.data.buyerId == request.auth.uid
+                    && request.resource.data.status == 'requested';
+      // status transitions by participants; billing fields are reconciled server-side.
+      allow update: if isParticipant() || isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // ── wallets & transactions: SERVER-OWNED. Read your own; never client-write. ──
+    match /wallets/{buyerId} {
+      allow read: if isSelf(buyerId) || isStaff();
+      allow write: if false; // Admin SDK only
+    }
+    match /transactions/{txnId} {
+      allow read: if isStaff()
+                  || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow write: if false; // Admin SDK only
+    }
+
+    // ── reviews: public read; buyer creates once; immutable thereafter. ──
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.buyerId == request.auth.uid
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── analytics_events: THE append-only ledger. Create only; never mutate. ──
+    match /analytics_events/{eventId} {
+      allow read: if isStaff();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // ── activity_logs & notifications: server-written. ──
+    match /activity_logs/{logId} {
+      allow read: if isStaff();
+      allow write: if false; // Admin SDK only
+    }
+    match /notifications/{notifId} {
+      allow read: if isStaff()
+                  || (isSignedIn() && resource.data.userId == request.auth.uid);
+      // recipient may only flip `read`.
+      allow update: if isSignedIn()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false; // Admin SDK only
+    }
+
+    // ── reference data: public read, admin write. ──
+    match /builders/{builderId} { allow read: if true; allow write: if isAdmin(); }
+    match /projects/{projectId} { allow read: if true; allow write: if isAdmin(); }
+
+    // ── settings: staff read, admin write. ──
+    match /system_settings/{docId}  { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /finance_settings/{docId} { allow read: if isStaff(); allow write: if isAdmin(); }
+
+    // ── default deny (documents intent; grants nothing). ──
+    match /{document=**} { allow read, write: if false; }
+  }
+}
