@@ -171,19 +171,28 @@ function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
 
   if (tab === "Buyers") {
     return (
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Demand by Project" subtitle="From advisor_profile_view events">
-          <BarList data={m.demandByProject} empty="No profile views yet" />
-        </Panel>
-        <Panel title="Top Concerns" subtitle="From review_submitted.concernTags">
-          <BarList data={m.topConcerns} empty="No reviews yet" />
-        </Panel>
-        <Panel title="Demand by Budget" subtitle="Price band the market wants">
-          <BarList data={m.demandByBudget} empty="No signups yet" />
-        </Panel>
-        <Panel title="⚠️ Zero-Result Searches" subtitle="Unmet demand — your expansion map">
-          <BarList data={m.zeroResultQueries} empty="No unmet searches yet" />
-        </Panel>
+      <div className="space-y-4">
+        <Grid>
+          <StatTile label="Buyer Stage Moves" value={m.stageProgressions} sub="exploring → shortlisting → negotiating → ready" />
+          <StatTile label="Ready to Book" value={m.readyToBookNow} sub="buyers currently at the final stage" />
+        </Grid>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel title="Demand by City" subtitle="From buyer_signup.targetCity — where to expand next">
+            <BarList data={m.demandByCity} empty="No signups yet" />
+          </Panel>
+          <Panel title="Demand by Project" subtitle="From advisor_profile_view events">
+            <BarList data={m.demandByProject} empty="No profile views yet" />
+          </Panel>
+          <Panel title="Top Concerns" subtitle="From review_submitted.concernTags">
+            <BarList data={m.topConcerns} empty="No reviews yet" />
+          </Panel>
+          <Panel title="Demand by Budget" subtitle="Price band the market wants">
+            <BarList data={m.demandByBudget} empty="No signups yet" />
+          </Panel>
+          <Panel title="⚠️ Zero-Result Searches" subtitle="Unmet demand — your expansion map">
+            <BarList data={m.zeroResultQueries} empty="No unmet searches yet" />
+          </Panel>
+        </div>
       </div>
     );
   }
@@ -203,6 +212,7 @@ function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
             <StatTile label="Abandoned Recharges" value={m.revenueLeakage.abandonedRecharges} />
             <StatTile label="Idle Wallets" value={m.revenueLeakage.idleWalletCount} />
             <StatTile label="Missed Demand" value={m.revenueLeakage.missedDemand} sub="interest never monetized" />
+            <StatTile label="Low-Balance Blocks" value={m.lowBalanceHits} sub="calls blocked, wallet too low" />
           </Grid>
         </Panel>
         <p className="text-[11.5px] text-soft">
