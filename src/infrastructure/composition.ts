@@ -3,6 +3,7 @@ import type { VerificationDeps } from "@core/application/use-cases/verification"
 import type { RegisterBuyerDeps } from "@core/application/use-cases/register-buyer";
 import type { RoleClaimService } from "@core/application/ports";
 import { FirestoreUserRepository } from "./repositories/firestore-user-repository";
+import { FirestoreWalletRepository } from "./repositories/firestore-wallet-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -62,6 +63,12 @@ export function buildBuyerDeps(): RegisterBuyerDeps {
     ids: idGenerator,
     session: sessionProvider,
   };
+}
+
+/** Client-side, read-only wallet access for the buyer's wallet screen. */
+export function buildWalletReader() {
+  const { db } = getFirebaseClient();
+  return new FirestoreWalletRepository(db);
 }
 
 /** Read-only repositories for rendering an advisor's review dossier. */

@@ -3,8 +3,10 @@ export type { Clock, IdGenerator, SessionProvider } from "./system";
 export type { AuthService, AuthUser, OtpChallenge } from "./auth-service";
 export type { StorageService, StoredFile } from "./storage-service";
 export type { RoleClaimService } from "./role-claim-service";
+export type { WalletLedger, LedgerEntry, LedgerResult } from "./wallet-ledger";
 export type {
   UserRepository,
+  WalletRepository,
   AdvisorProfileRepository,
   PropertyRepository,
   DocumentRepository,

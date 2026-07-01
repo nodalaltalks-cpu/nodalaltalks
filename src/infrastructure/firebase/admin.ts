@@ -34,7 +34,15 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     ? getApp()
     : initializeApp(buildAdminOptions());
 
-  cached = { app, auth: getAuth(app), db: getFirestore(app) };
+  const db = getFirestore(app);
+  // Event props/entities carry optional fields; don't reject undefined on write.
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // settings() throws if the instance was already used — safe to ignore.
+  }
+
+  cached = { app, auth: getAuth(app), db };
   return cached;
 }
 

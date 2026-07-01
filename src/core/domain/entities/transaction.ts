@@ -23,4 +23,8 @@ export interface Transaction {
   failureReason?: string;
 
   createdAt: number;
+  /** Shape version of this ledger row; lets future migrations run without a backfill. */
+  schemaVersion: number;
+  /** Extension point for future structured signals. Unpopulated today. */
+  metadata?: Record<string, unknown>;
 }

@@ -2,9 +2,17 @@ import type {
   AdvisorProfile,
   AdvisorStatus,
   Property,
+  Transaction,
   User,
+  Wallet,
   VerificationDocument,
 } from "../../domain/entities";
+
+/** Client-side, read-only wallet access (writes happen server-side only). */
+export interface WalletRepository {
+  get(buyerId: string): Promise<Wallet | null>;
+  listTransactions(ownerId: string, max?: number): Promise<Transaction[]>;
+}
 
 export interface UserRepository {
   create(user: User): Promise<void>;
