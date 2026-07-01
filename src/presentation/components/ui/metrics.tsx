@@ -98,6 +98,56 @@ export function Funnel({
   );
 }
 
+/** Renders `Record<groupKey, Tally>` — one block per group, its tally as
+ *  ranked chips. Used for advisorExpertise (per-advisor project/concern
+ *  tags): groups by total mentions, chips within a group by count. */
+export function GroupedTags({
+  data,
+  groupLimit = 8,
+  tagLimit = 5,
+  empty = "No data yet",
+}: {
+  data: Record<string, Record<string, number>>;
+  groupLimit?: number;
+  tagLimit?: number;
+  empty?: string;
+}) {
+  const total = (tally: Record<string, number>) =>
+    Object.values(tally).reduce((a, b) => a + b, 0);
+  const keys = Object.keys(data)
+    .sort((a, b) => total(data[b] ?? {}) - total(data[a] ?? {}))
+    .slice(0, groupLimit);
+
+  if (keys.length === 0) {
+    return <div className="py-6 text-center text-[12px] text-soft">{empty}</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {keys.map((k) => {
+        const tags = Object.entries(data[k] ?? {})
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, tagLimit);
+        return (
+          <div key={k} className="rounded-xl border border-border p-3">
+            <div className="truncate text-[11.5px] font-bold text-ink-2">{k}</div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {tags.map(([tag, n]) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-surface px-2 py-0.5 text-[10.5px] font-medium text-soft"
+                >
+                  {tag} · {n}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Panel({
   title,
   subtitle,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { isAdminRole } from "@core/domain/value-objects/role";
 import type { Metrics } from "@core/application/projections";
 import { useAuth } from "@/presentation/providers/auth-provider";
-import { BarList, Funnel, Panel, StatTile } from "@/presentation/components/ui/metrics";
+import { BarList, Funnel, GroupedTags, Panel, StatTile } from "@/presentation/components/ui/metrics";
 import { cn } from "@/lib/utils";
 import { useMetrics } from "./use-metrics";
 
@@ -132,6 +132,12 @@ function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
                 : "All advisors with meaningful traffic are converting at 20%+ — safe to prioritize recruitment by the Supply vs Demand panel above."}
             </p>
           )}
+        </Panel>
+        <Panel
+          title="Advisor Expertise & Specialization"
+          subtitle="Projects delivered + buyer concerns raised, per advisor with completed calls"
+        >
+          <GroupedTags data={m.advisorExpertise} empty="No completed calls yet" />
         </Panel>
         <Panel title="Operational Bottlenecks" subtitle="Where the machine is stalling">
           <Grid>

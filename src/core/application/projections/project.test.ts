@@ -168,6 +168,23 @@ describe("project() — liquidity per project", () => {
   });
 });
 
+describe("project() — advisor expertise", () => {
+  it("tallies each advisor's delivered projects and the concern tags raised on their calls", () => {
+    const events = [
+      ev(E.CALL_COMPLETED, { advisorId: "a1", callId: "c1", projectId: "Lodha Palava" }, { durationSec: 600 }),
+      ev(E.CALL_COMPLETED, { advisorId: "a1", callId: "c2", projectId: "Lodha Palava" }, { durationSec: 300 }),
+      ev(E.REVIEW_SUBMITTED, { advisorId: "a1", callId: "c1" }, { rating: 5, concernTags: ["Construction quality"] }),
+      ev(E.REVIEW_SUBMITTED, { advisorId: "a1", callId: "c2" }, { rating: 4, concernTags: ["Construction quality", "Resale value"] }),
+    ];
+    const m = project(events);
+    expect(m.advisorExpertise["a1"]).toEqual({
+      "Lodha Palava": 2,
+      "Construction quality": 2,
+      "Resale value": 1,
+    });
+  });
+});
+
 describe("project() — advisor conversion funnel", () => {
   it("ranks advisors by completed/views, highest conversion first", () => {
     const events = [
