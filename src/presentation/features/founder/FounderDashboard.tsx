@@ -104,6 +104,11 @@ function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
     const liquidity = Object.fromEntries(
       Object.entries(m.liquidityByProject).map(([k, v]) => [k, v.ratio]),
     );
+    // "Which advisors convert best?" — only rank advisors with real traffic,
+    // so a single lucky call doesn't outrank someone with 50 views and 20 calls.
+    const ranked = m.advisorConversion.filter((a) => a.views >= 3);
+    const conversionData = Object.fromEntries(ranked.map((a) => [a.advisorId, a.conversionRate]));
+    const laggingCount = ranked.filter((a) => a.conversionRate < 20).length;
     return (
       <div className="space-y-4">
         <Grid>
@@ -114,6 +119,19 @@ function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
         </Grid>
         <Panel title="Supply vs Demand by Project" subtitle="Buyers per active advisor — high = starved of advisors (recruit here)">
           <BarList data={liquidity} fmt={(n) => `${n}:1`} empty="No call requests yet" />
+        </Panel>
+        <Panel
+          title="Advisor Conversion Rate"
+          subtitle="Profile view → completed call, advisors with 3+ views"
+        >
+          <BarList data={conversionData} fmt={(n) => `${n}%`} empty="Not enough traffic yet" />
+          {ranked.length > 0 && (
+            <p className="mt-4 border-t border-border pt-3 text-[11.5px] text-muted-foreground">
+              {laggingCount > 0
+                ? `${laggingCount} of ${ranked.length} advisors are converting under 20% — investigate response time, rate, or profile quality before recruiting more supply for their projects.`
+                : "All advisors with meaningful traffic are converting at 20%+ — safe to prioritize recruitment by the Supply vs Demand panel above."}
+            </p>
+          )}
         </Panel>
         <Panel title="Operational Bottlenecks" subtitle="Where the machine is stalling">
           <Grid>

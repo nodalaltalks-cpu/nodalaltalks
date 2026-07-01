@@ -36,6 +36,16 @@ export interface AarrrFunnel {
   revenue: number;
 }
 
+/** One advisor's view -> request -> completed funnel — "who converts best?" */
+export interface AdvisorConversion {
+  advisorId: string;
+  views: number;
+  requests: number;
+  completed: number;
+  /** completed / views, rounded %. 0 when there are no views yet. */
+  conversionRate: number;
+}
+
 export interface Metrics {
   // ── Founder · Executive Overview ──
   tcm: number;
@@ -99,6 +109,7 @@ export interface Metrics {
   bottlenecks: OperationalBottlenecks;
   revenueLeakage: RevenueLeakage;
   ndtTrustIndex: number;
+  advisorConversion: AdvisorConversion[];
 
   // ── meta ──
   _total: number;

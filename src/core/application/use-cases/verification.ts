@@ -9,6 +9,7 @@ import type {
   DocumentRepository,
   EventRepository,
   IdGenerator,
+  PropertyRepository,
   RoleClaimService,
   RuntimeContext,
   SessionProvider,
@@ -29,6 +30,7 @@ import type {
 export interface VerificationDeps {
   advisors: AdvisorProfileRepository;
   documents: DocumentRepository;
+  properties: PropertyRepository;
   events: EventRepository;
   clock: Clock;
   ids: IdGenerator;
@@ -136,9 +138,19 @@ export async function activateAdvisor(
   // Privileged: grant the advisor role server-side.
   await deps.roleClaims.setRole(advisorId, "advisor");
 
-  await emitter(verifier, advisorId, deps)(EVENT_NAMES.ADVISOR_ACTIVATED, {
-    verifierId: verifier.uid,
-  });
+  // Stamp the project on activation — this is the supply side of
+  // liquidityByProject (Marketplace Health's "who needs advisor recruitment"
+  // panel); without it, every project reads as zero supply forever.
+  const profile = await deps.advisors.get(advisorId);
+  const properties = await deps.properties.listByAdvisor(advisorId);
+  const primaryProperty =
+    properties.find((p) => p.id === profile?.primaryPropertyId) ?? properties[0];
+
+  await emitter(verifier, advisorId, deps)(
+    EVENT_NAMES.ADVISOR_ACTIVATED,
+    { verifierId: verifier.uid },
+    { projectId: primaryProperty?.project },
+  );
 }
 
 /** Reject the whole application with a reason. */

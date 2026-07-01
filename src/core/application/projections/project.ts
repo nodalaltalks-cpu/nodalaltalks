@@ -1,6 +1,7 @@
 import { EVENT_NAMES } from "../../domain/events/event-names";
 import type { AnalyticsEvent } from "../../domain/events/event.types";
 import type {
+  AdvisorConversion,
   Metrics,
   ProjectLiquidity,
   Tally,
@@ -216,6 +217,32 @@ export function project(
     );
   });
 
+  // (D2) Per-advisor conversion — view -> request -> completed. "Which advisors
+  // convert best?" straight from the taxonomy; no repository join needed since
+  // advisorId is on all three event types already.
+  const viewsByAdvisor = tally(profileViews, (e) => e.entity.advisorId);
+  const requestsByAdvisor = tally(requested, (e) => e.entity.advisorId);
+  const completedByAdvisor = tally(completed, (e) => e.entity.advisorId);
+  const advisorIds = new Set([
+    ...Object.keys(viewsByAdvisor),
+    ...Object.keys(requestsByAdvisor),
+    ...Object.keys(completedByAdvisor),
+  ]);
+  const advisorConversion: AdvisorConversion[] = [...advisorIds]
+    .map((advisorId) => {
+      const views = viewsByAdvisor[advisorId] || 0;
+      const conversionRequests = requestsByAdvisor[advisorId] || 0;
+      const conversionCompleted = completedByAdvisor[advisorId] || 0;
+      return {
+        advisorId,
+        views,
+        requests: conversionRequests,
+        completed: conversionCompleted,
+        conversionRate: views ? Math.round((100 * conversionCompleted) / views) : 0,
+      };
+    })
+    .sort((a, b) => b.conversionRate - a.conversionRate || b.completed - a.completed);
+
   // (F) Operational bottlenecks
   const bottlenecks = {
     verificationBacklog: submissions.length - activations.length - rejections.length,
@@ -324,6 +351,7 @@ export function project(
     avgVerificationHours,
     liquidityByProject,
     advisorExpertise,
+    advisorConversion,
     stageProgressions: stageChanges.length,
     readyToBookNow: stageChanges.filter((e) => e.props.toStage === "ready_to_book").length,
     bottlenecks,

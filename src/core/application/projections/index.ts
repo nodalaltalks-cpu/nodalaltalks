@@ -6,4 +6,5 @@ export type {
   OperationalBottlenecks,
   RevenueLeakage,
   AarrrFunnel,
+  AdvisorConversion,
 } from "./metrics.types";

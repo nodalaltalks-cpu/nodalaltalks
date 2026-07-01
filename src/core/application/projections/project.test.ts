@@ -167,3 +167,26 @@ describe("project() — liquidity per project", () => {
     });
   });
 });
+
+describe("project() — advisor conversion funnel", () => {
+  it("ranks advisors by completed/views, highest conversion first", () => {
+    const events = [
+      // a1: 2 views, 1 request, 1 completed -> 50%
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a1" }),
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a1" }),
+      ev(E.CALL_REQUESTED, { advisorId: "a1", buyerId: "b1" }),
+      ev(E.CALL_COMPLETED, { advisorId: "a1", buyerId: "b1", callId: "c1" }),
+      // a2: 4 views, 1 request, 0 completed -> 0%
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a2" }),
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a2" }),
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a2" }),
+      ev(E.ADVISOR_PROFILE_VIEW, { advisorId: "a2" }),
+      ev(E.CALL_REQUESTED, { advisorId: "a2", buyerId: "b2" }),
+    ];
+    const m = project(events);
+    expect(m.advisorConversion).toEqual([
+      { advisorId: "a1", views: 2, requests: 1, completed: 1, conversionRate: 50 },
+      { advisorId: "a2", views: 4, requests: 1, completed: 0, conversionRate: 0 },
+    ]);
+  });
+});

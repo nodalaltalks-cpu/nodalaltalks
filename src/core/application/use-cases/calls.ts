@@ -12,6 +12,7 @@ import type {
   Clock,
   EventRepository,
   IdGenerator,
+  PropertyRepository,
   RuntimeContext,
   SessionProvider,
   WalletLedger,
@@ -40,6 +41,7 @@ const MIN_BILLABLE_MINUTES = 1;
 
 export interface CallDeps {
   advisors: AdvisorProfileRepository;
+  properties: PropertyRepository;
   wallet: WalletRepository;
   calls: CallRepository;
   callService: CallService;
@@ -86,6 +88,15 @@ export async function requestCall(
     throw new Error("Add money to your wallet to start this call.");
   }
 
+  // Resolve the project once, at request time, and carry it on the call doc —
+  // this is the demand side of liquidityByProject (Marketplace Health's "who
+  // needs advisor recruitment" panel), which reads entity.projectId off
+  // call_requested. Without it every project reads as zero demand forever.
+  const primaryProperty = advisor.primaryPropertyId
+    ? await deps.properties.get(advisor.primaryPropertyId)
+    : null;
+  const projectId = primaryProperty?.project;
+
   const now = deps.clock.now();
   const callId = deps.ids.next("call");
   const recordingConsented = input.recordingConsented ?? false;
@@ -93,6 +104,7 @@ export async function requestCall(
     id: callId,
     buyerId: buyer.uid,
     advisorId: input.advisorId,
+    projectId,
     status: "requested",
     ratePerMinPaise: advisor.ratePerMinPaise,
     requestedAt: now,
@@ -105,7 +117,14 @@ export async function requestCall(
 
   const emit = createEventEmitter(
     { id: buyer.uid, type: "buyer" },
-    { callId, buyerId: buyer.uid, advisorId: input.advisorId, actorId: buyer.uid, actorType: "buyer" },
+    {
+      callId,
+      buyerId: buyer.uid,
+      advisorId: input.advisorId,
+      projectId,
+      actorId: buyer.uid,
+      actorType: "buyer",
+    },
     deps,
   );
   await emit(EVENT_NAMES.CALL_REQUESTED, { ratePerMin: paiseToRupees(advisor.ratePerMinPaise) });
@@ -146,7 +165,14 @@ export async function cancelCall(
   const actorType = actor.uid === call.advisorId ? "advisor" : "buyer";
   const emit = createEventEmitter(
     { id: actor.uid, type: actorType },
-    { callId, buyerId: call.buyerId, advisorId: call.advisorId, actorId: actor.uid, actorType },
+    {
+      callId,
+      buyerId: call.buyerId,
+      advisorId: call.advisorId,
+      projectId: call.projectId,
+      actorId: actor.uid,
+      actorType,
+    },
     deps,
   );
   await emit(EVENT_NAMES.CALL_CANCELLED, { reason });
@@ -215,7 +241,7 @@ export async function endCall(
 
   const emit = createEventEmitter(
     { id: actor.uid, type: actor.uid === call.advisorId ? "advisor" : "buyer" },
-    { callId, buyerId: call.buyerId, advisorId: call.advisorId, actorId: actor.uid },
+    { callId, buyerId: call.buyerId, advisorId: call.advisorId, projectId: call.projectId, actorId: actor.uid },
     deps,
   );
   await emit(EVENT_NAMES.CALL_COMPLETED, {

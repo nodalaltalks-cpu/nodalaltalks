@@ -51,6 +51,7 @@ export function buildVerificationDeps(): VerificationDeps & {
   return {
     advisors: new FirestoreAdvisorProfileRepository(db),
     documents: new FirestoreDocumentRepository(db),
+    properties: new FirestorePropertyRepository(db),
     events: getEventRepository(),
     clock: systemClock,
     ids: idGenerator,
@@ -84,6 +85,7 @@ export function buildCallDeps(): CallDeps {
   const { db } = getFirebaseClient();
   return {
     advisors: new FirestoreAdvisorProfileRepository(db),
+    properties: new FirestorePropertyRepository(db),
     wallet: new FirestoreWalletRepository(db),
     calls: new FirestoreCallRepository(db),
     callService: new PlaceholderCallService(),

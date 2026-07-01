@@ -4,7 +4,7 @@ import type { CallDeps, EndCallDeps } from "./calls";
 import { InMemoryEventRepository } from "@infra/events/in-memory-event-repository";
 import { PlaceholderCallService } from "@infra/calling/placeholder-call-service";
 import { project } from "../projections/project";
-import type { AdvisorProfile, Call, Wallet } from "../../domain/entities";
+import type { AdvisorProfile, Call, Property, Wallet } from "../../domain/entities";
 import type { AuthUser, CallSettlement } from "../ports";
 
 const buyer: AuthUser = { uid: "b1", role: "buyer" };
@@ -21,6 +21,23 @@ const advisor: AdvisorProfile = {
   ownershipVerified: true,
   ratingAvg: 0,
   ratingCount: 0,
+  primaryPropertyId: "prop_1",
+  createdAt: 0,
+  updatedAt: 0,
+};
+
+const property: Property = {
+  id: "prop_1",
+  advisorId: "adv_1",
+  builder: "Lodha Group",
+  project: "Lodha Palava City",
+  city: "Dombivali",
+  locality: "Palava",
+  propertyType: "apartment",
+  yearOfPurchase: 2021,
+  purchasePriceBucket: "₹50 lakh – ₹1 crore",
+  possessionStatus: "received_living",
+  expertise: [],
   createdAt: 0,
   updatedAt: 0,
 };
@@ -60,6 +77,11 @@ function harness(opts: { walletBalancePaise?: number } = {}) {
       update: async () => {},
       listByStatus: async () => [advisor],
       listActive: async () => [advisor],
+    },
+    properties: {
+      create: async () => {},
+      get: async (id) => (id === "prop_1" ? property : null),
+      listByAdvisor: async () => [property],
     },
     wallet: {
       get: async (id) => wallets.get(id) ?? null,
@@ -113,10 +135,13 @@ describe("requestCall", () => {
 
     expect(call.status).toBe("started");
     expect(call.ratePerMinPaise).toBe(5000);
+    expect(call.projectId).toBe("Lodha Palava City");
     expect(session.provider).toBe("placeholder");
 
-    const names = (await t.events.query()).map((e) => e.name);
-    expect(names).toEqual(["call_requested", "call_accepted", "call_started"]);
+    const log = await t.events.query();
+    expect(log.map((e) => e.name)).toEqual(["call_requested", "call_accepted", "call_started"]);
+    // liquidityByProject's demand side reads entity.projectId off call_requested.
+    expect(log[0]!.entity.projectId).toBe("Lodha Palava City");
   });
 
   it("refuses an inactive advisor", async () => {

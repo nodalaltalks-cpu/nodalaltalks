@@ -9,6 +9,7 @@ import type { VerificationDeps } from "./verification";
 import { InMemoryEventRepository } from "@infra/events/in-memory-event-repository";
 import type {
   AdvisorProfile,
+  Property,
   VerificationDocument,
 } from "../../domain/entities";
 import type { AuthUser, RoleClaimService } from "../ports";
@@ -48,11 +49,28 @@ function setup(docs: VerificationDocument[]) {
         ownershipVerified: false,
         ratingAvg: 0,
         ratingCount: 0,
+        primaryPropertyId: "prop_1",
         createdAt: 0,
         updatedAt: 0,
       },
     ],
   ]);
+  const properties: Property[] = [
+    {
+      id: "prop_1",
+      advisorId: "adv_1",
+      builder: "Lodha Group",
+      project: "Lodha Palava City",
+      city: "Dombivali",
+      locality: "Palava",
+      propertyType: "apartment",
+      yearOfPurchase: 2021,
+      possessionStatus: "received_living",
+      expertise: [],
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  ];
   const docStore = new Map(docs.map((d) => [d.id, d] as const));
   const events = new InMemoryEventRepository();
   const roles: { granted: Array<[string, string]> } & RoleClaimService = {
@@ -68,6 +86,11 @@ function setup(docs: VerificationDocument[]) {
         void profiles.set(id, { ...profiles.get(id)!, ...patch }),
       listByStatus: async () => [...profiles.values()],
       listActive: async () => [...profiles.values()],
+    },
+    properties: {
+      create: async () => {},
+      get: async (id) => properties.find((p) => p.id === id) ?? null,
+      listByAdvisor: async (advisorId) => properties.filter((p) => p.advisorId === advisorId),
     },
     documents: {
       create: async () => {},
@@ -129,8 +152,11 @@ describe("activateAdvisor", () => {
     expect(t.profiles.get("adv_1")?.status).toBe("active");
     expect(t.profiles.get("adv_1")?.ownershipVerified).toBe(true);
     expect(t.roles.granted).toEqual([["adv_1", "advisor"]]);
-    expect((await t.events.query()).map((e) => e.name)).toContain(
-      "advisor_activated",
+    const log = await t.events.query();
+    expect(log.map((e) => e.name)).toContain("advisor_activated");
+    // liquidityByProject's supply side reads this off advisor_activated.
+    expect(log.find((e) => e.name === "advisor_activated")?.entity.projectId).toBe(
+      "Lodha Palava City",
     );
   });
 });
