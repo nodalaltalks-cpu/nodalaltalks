@@ -125,7 +125,15 @@ src/
   request time). Added `advisorConversion` (view → request → completed funnel
   per advisor) — the one genuinely missing metric — surfaced as a new panel
   with a simple derived recommendation, no AI.
-- Phase 3 — Business / Advisor / Buyer / Revenue Intelligence _(next)_
+- **Feature 11 — Buyer + Revenue Intelligence (live) ✅**: same pattern as
+  Feature 10 — `project()` already computed `demandByCity`, `stageProgressions`,
+  `readyToBookNow`, and `lowBalanceHits`; the dashboard never rendered them. No
+  reducer changes, pure UI surfacing. Buyers tab gained "Demand by City"
+  (directly answers "which cities are growing fastest") and a buyer-stage
+  funnel; Revenue tab's leakage panel gained a "Low-Balance Blocks" tile.
+  `advisorExpertise` (Advisor Intelligence) is still unused — a nested shape
+  that needs its own component, left for a follow-up.
+- Phase 3 — Business / Advisor Intelligence _(next)_
 
 ### Firebase emulators
 
