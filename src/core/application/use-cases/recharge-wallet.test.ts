@@ -34,6 +34,11 @@ function deps(overrides?: { verify?: PaymentResult }): {
         balances.set(buyerId, bal);
         return { balanceAfterPaise: bal, transactionId: `txn_${++n}` };
       },
+      settleCall: async ({ buyerId, amountChargedPaise }) => {
+        const bal = (balances.get(buyerId) ?? 0) - amountChargedPaise;
+        balances.set(buyerId, bal);
+        return { balanceAfterPaise: bal, transactionId: `txn_${++n}` };
+      },
     },
     events,
     clock: { now: () => 1000 },

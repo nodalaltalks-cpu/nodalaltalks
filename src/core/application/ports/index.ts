@@ -3,7 +3,7 @@ export type { Clock, IdGenerator, SessionProvider, RuntimeContext } from "./syst
 export type { AuthService, AuthUser, OtpChallenge } from "./auth-service";
 export type { StorageService, StoredFile } from "./storage-service";
 export type { RoleClaimService } from "./role-claim-service";
-export type { WalletLedger, LedgerEntry, LedgerResult } from "./wallet-ledger";
+export type { WalletLedger, LedgerEntry, LedgerResult, CallSettlement } from "./wallet-ledger";
 export type {
   UserRepository,
   WalletRepository,
@@ -12,6 +12,7 @@ export type {
   DocumentRepository,
   PayoutAccount,
   PayoutAccountRepository,
+  CallRepository,
 } from "./repositories";
 export type {
   PaymentGateway,

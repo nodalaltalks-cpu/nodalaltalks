@@ -41,4 +41,6 @@ export interface Call {
 
   createdAt: number;
   updatedAt: number;
+  /** Shape version of this doc; lets future migrations run without a backfill. */
+  schemaVersion: number;
 }

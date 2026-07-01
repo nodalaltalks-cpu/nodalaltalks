@@ -91,8 +91,17 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && request.resource.data.buyerId == request.auth.uid
                     && request.resource.data.status == 'requested';
-      // status transitions by participants; billing fields are reconciled server-side.
-      allow update: if isParticipant() || isStaff();
+      // Participants may progress status pre-completion (accepted/started/
+      // cancelled) but can never touch billing fields or mark a call
+      // 'completed' — that's written only by endCall via the Admin SDK,
+      // which bypasses these rules entirely.
+      allow update: if isStaff()
+                    || (isParticipant()
+                        && request.resource.data.status in ['accepted', 'started', 'cancelled']
+                        && unchanged('amountChargedPaise')
+                        && unchanged('advisorPayoutPaise')
+                        && unchanged('durationSec')
+                        && unchanged('endReason'));
       allow delete: if isAdmin();
     }
 

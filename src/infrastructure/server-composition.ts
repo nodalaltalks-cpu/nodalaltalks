@@ -1,7 +1,9 @@
 import "server-only";
 import type { RechargeWalletDeps } from "@core/application/use-cases/recharge-wallet";
+import type { EndCallDeps } from "@core/application/use-cases/calls";
 import { PlaceholderPaymentGateway } from "./payments/placeholder-payment-gateway";
 import { AdminWalletLedger } from "./repositories/admin-wallet-ledger";
+import { AdminCallRepository } from "./repositories/admin-call-repository";
 import { AdminEventRepository } from "./events/admin-event-repository";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
@@ -19,6 +21,19 @@ import { serverRuntimeContext } from "./system/runtime-context";
 export function buildRechargeDeps(): RechargeWalletDeps {
   return {
     payments: new PlaceholderPaymentGateway(),
+    ledger: new AdminWalletLedger(),
+    events: new AdminEventRepository(),
+    clock: systemClock,
+    ids: idGenerator,
+    session: sessionProvider,
+    runtime: serverRuntimeContext,
+  };
+}
+
+/** Deps for endCall — the server-owned half (billing) of a call's lifecycle. */
+export function buildEndCallDeps(): EndCallDeps {
+  return {
+    calls: new AdminCallRepository(),
     ledger: new AdminWalletLedger(),
     events: new AdminEventRepository(),
     clock: systemClock,

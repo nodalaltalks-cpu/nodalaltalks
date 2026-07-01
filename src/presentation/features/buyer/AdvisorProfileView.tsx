@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { EVENT_NAMES } from "@core/domain/events";
 import { formatPaise } from "@core/domain/value-objects/money";
 import { useTrack } from "@/presentation/analytics/use-track";
+import { useRequestCall } from "@/presentation/features/calls/hooks";
 import { Button } from "@/presentation/components/ui/button";
 import { useAdvisorProfile } from "./hooks";
 
 export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   const { data, isLoading } = useAdvisorProfile(advisorId);
   const track = useTrack();
+  const router = useRouter();
+  const requestCall = useRequestCall();
   const viewed = useRef(false);
   const [shortlisted, setShortlisted] = useState(false);
 
@@ -43,6 +47,12 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
     if (shortlisted) return;
     setShortlisted(true);
     track(EVENT_NAMES.ADVISOR_SHORTLISTED, { advisorId, projectId: property?.project });
+  };
+
+  const talkNow = () => {
+    requestCall.mutate(advisorId, {
+      onSuccess: ({ call }) => router.push(`/buyer/call/${call.id}`),
+    });
   };
 
   return (
@@ -92,10 +102,10 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
         <div className="mt-5 flex flex-col gap-2.5">
           <Button
             className="w-full bg-amber text-ink hover:bg-amber-2"
-            disabled
-            title="Calling launches in Phase 2"
+            disabled={requestCall.isPending}
+            onClick={talkNow}
           >
-            📞 Talk Now (launching soon)
+            {requestCall.isPending ? "Connecting…" : "📞 Talk Now"}
           </Button>
           <button
             onClick={shortlist}
@@ -104,9 +114,11 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
             {shortlisted ? "★ Shortlisted" : "☆ Shortlist advisor"}
           </button>
         </div>
-        <p className="mt-3 text-center text-[11px] text-white/35">
-          Wallet, booking &amp; calls arrive in Phase 2 (Features 6–7).
-        </p>
+        {requestCall.isError && (
+          <p className="mt-3 text-center text-[11.5px] font-medium text-rose">
+            {requestCall.error.message}
+          </p>
+        )}
       </div>
     </div>
   );

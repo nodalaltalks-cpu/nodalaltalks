@@ -1,9 +1,11 @@
 import type { SubmitAdvisorApplicationDeps } from "@core/application/use-cases/submit-advisor-application";
 import type { VerificationDeps } from "@core/application/use-cases/verification";
 import type { RegisterBuyerDeps } from "@core/application/use-cases/register-buyer";
+import type { CallDeps } from "@core/application/use-cases/calls";
 import type { RoleClaimService } from "@core/application/ports";
 import { FirestoreUserRepository } from "./repositories/firestore-user-repository";
 import { FirestoreWalletRepository } from "./repositories/firestore-wallet-repository";
+import { FirestoreCallRepository } from "./repositories/firestore-call-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -12,6 +14,7 @@ import { sessionProvider } from "./system/session-provider";
 import { webRuntimeContext } from "./system/runtime-context";
 import { FirebaseStorageService } from "./storage/firebase-storage-service";
 import { HttpRoleClaimService } from "./auth/http-role-claim-service";
+import { PlaceholderCallService } from "./calling/placeholder-call-service";
 import { FirestoreAdvisorProfileRepository } from "./repositories/firestore-advisor-profile-repository";
 import { FirestorePropertyRepository } from "./repositories/firestore-property-repository";
 import { FirestoreDocumentRepository } from "./repositories/firestore-document-repository";
@@ -73,6 +76,28 @@ export function buildBuyerDeps(): RegisterBuyerDeps {
 export function buildWalletReader() {
   const { db } = getFirebaseClient();
   return new FirestoreWalletRepository(db);
+}
+
+/** Deps for requestCall/cancelCall — the client-owned half of a call's lifecycle. */
+export function buildCallDeps(): CallDeps {
+  const { db } = getFirebaseClient();
+  return {
+    advisors: new FirestoreAdvisorProfileRepository(db),
+    wallet: new FirestoreWalletRepository(db),
+    calls: new FirestoreCallRepository(db),
+    callService: new PlaceholderCallService(),
+    events: getEventRepository(),
+    clock: systemClock,
+    ids: idGenerator,
+    session: sessionProvider,
+    runtime: webRuntimeContext,
+  };
+}
+
+/** Client-side call read-model access (in-call screen, call history). */
+export function buildCallReader() {
+  const { db } = getFirebaseClient();
+  return new FirestoreCallRepository(db);
 }
 
 /** Read-only repositories for rendering an advisor's review dossier. */

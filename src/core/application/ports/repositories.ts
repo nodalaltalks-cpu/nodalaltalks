@@ -1,6 +1,7 @@
 import type {
   AdvisorProfile,
   AdvisorStatus,
+  Call,
   Property,
   Transaction,
   User,
@@ -64,4 +65,17 @@ export interface PayoutAccount {
 export interface PayoutAccountRepository {
   upsert(account: PayoutAccount): Promise<void>;
   get(advisorId: string): Promise<PayoutAccount | null>;
+}
+
+/**
+ * calls/{callId} read-model. Status transitions (requested → started →
+ * completed) may be written by participants client-side per Security Rules;
+ * the billing fields (amountChargedPaise, advisorPayoutPaise) are only ever
+ * authoritative once reconciled server-side by endCall.
+ */
+export interface CallRepository {
+  create(call: Call): Promise<void>;
+  get(callId: string): Promise<Call | null>;
+  update(callId: string, patch: Partial<Call>): Promise<void>;
+  listRecentByBuyer(buyerId: string, max?: number): Promise<Call[]>;
 }
