@@ -105,7 +105,18 @@ src/
   can never write its billing fields or mark it `completed` client-side. Buyer
   UI: "Talk Now" on the advisor profile → a live in-call screen with a running
   cost estimate and hang-up.
-- Phase 2 — Reviews _(next)_
+- **Feature 9 — Reviews (live) ✅**: `submitReview` is server-only, same
+  reasoning as recharge/endCall — Security Rules restrict
+  `advisor_profiles.ratingAvg`/`ratingCount` to staff writes, so folding a new
+  rating into that cached aggregate can't happen from a buyer client. The new
+  `ReviewLedger.submit` writes the review and updates the aggregate atomically;
+  the review's doc id is its `callId`, making "one review per call" a
+  Firestore-level guarantee. `firestore.rules` tightened to server-owned writes
+  (public read unchanged) — reviews were previously client-creatable for any
+  advisorId with no proof of an actual call. Buyer UI: a rating prompt right
+  after a call ends, and the public review list on the advisor profile.
+  **Phase 2 (Wallet · Calls · Reviews) complete.**
+- Phase 3 — Marketplace / Business / Advisor / Buyer / Revenue Intelligence _(next)_
 
 ### Firebase emulators
 
