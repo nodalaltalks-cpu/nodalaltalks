@@ -15,4 +15,6 @@ export interface Review {
   comment?: string;
 
   createdAt: number;
+  /** Shape version of this doc; lets future migrations run without a backfill. */
+  schemaVersion: number;
 }

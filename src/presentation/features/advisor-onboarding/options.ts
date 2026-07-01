@@ -1,4 +1,5 @@
 /** Option sets for the onboarding form — values mirror the approved prototype. */
+import { PLATFORM_COMMISSION_RATE } from "@core/domain/value-objects/commission";
 
 export const CITIES = [
   "Mumbai", "Pune", "Delhi NCR", "Bengaluru", "Hyderabad", "Chennai",
@@ -84,4 +85,7 @@ export const PRIMARY_DOC_TYPES = [
 
 export const RATE_MIN = 30;
 export const RATE_MAX = 120;
-export const PLATFORM_KEEP = 0.8; // advisor keeps 80% (20% take-rate)
+/** Advisor's take-home share, derived from the one platform commission constant
+ *  (core/domain/value-objects/commission.ts) — this used to be a second,
+ *  separately-hardcoded 0.8 here, which could silently drift from the real rate. */
+export const PLATFORM_KEEP = 1 - PLATFORM_COMMISSION_RATE;

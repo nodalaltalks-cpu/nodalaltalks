@@ -1,9 +1,11 @@
 import "server-only";
 import type { RechargeWalletDeps } from "@core/application/use-cases/recharge-wallet";
 import type { EndCallDeps } from "@core/application/use-cases/calls";
+import type { SubmitReviewDeps } from "@core/application/use-cases/submit-review";
 import { PlaceholderPaymentGateway } from "./payments/placeholder-payment-gateway";
 import { AdminWalletLedger } from "./repositories/admin-wallet-ledger";
 import { AdminCallRepository } from "./repositories/admin-call-repository";
+import { AdminReviewLedger } from "./repositories/admin-review-ledger";
 import { AdminEventRepository } from "./events/admin-event-repository";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
@@ -35,6 +37,19 @@ export function buildEndCallDeps(): EndCallDeps {
   return {
     calls: new AdminCallRepository(),
     ledger: new AdminWalletLedger(),
+    events: new AdminEventRepository(),
+    clock: systemClock,
+    ids: idGenerator,
+    session: sessionProvider,
+    runtime: serverRuntimeContext,
+  };
+}
+
+/** Deps for submitReview — the server-owned half (advisor rating aggregate). */
+export function buildSubmitReviewDeps(): SubmitReviewDeps {
+  return {
+    calls: new AdminCallRepository(),
+    reviews: new AdminReviewLedger(),
     events: new AdminEventRepository(),
     clock: systemClock,
     ids: idGenerator,

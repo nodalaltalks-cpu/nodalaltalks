@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPaise, callCharge } from "@core/domain/value-objects/money";
+import { EXPERTISE } from "@/presentation/features/advisor-onboarding/options";
 import { useAdvisorProfile } from "@/presentation/features/buyer/hooks";
+import { useReviewForCall, useSubmitReview } from "@/presentation/features/reviews/hooks";
 import { Button } from "@/presentation/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useCall, useEndCall } from "./hooks";
 
 /** Live in-call screen. Placeholder provider today — same UI keeps working once
@@ -46,7 +49,12 @@ export function CallView({ callId }: { callId: string }) {
             {Math.floor((call.durationSec ?? 0) / 60)}m {(call.durationSec ?? 0) % 60}s ·{" "}
             {formatPaise(call.amountChargedPaise ?? 0)} charged
           </p>
-          <Button className="mt-5 w-full bg-amber text-ink hover:bg-amber-2" onClick={() => router.push("/buyer/wallet")}>
+          <ReviewPrompt callId={callId} />
+          <Button
+            variant="ghost"
+            className="mt-3 w-full"
+            onClick={() => router.push("/buyer/wallet")}
+          >
             View wallet
           </Button>
         </div>
@@ -88,6 +96,122 @@ export function CallView({ callId }: { callId: string }) {
         {endCall.isPending ? "…" : "☎"}
       </button>
       <p className="mt-3 text-[11px] text-muted-foreground">Tap to hang up</p>
+    </div>
+  );
+}
+
+const CONFIDENCE_OPTIONS = [
+  { value: "more", label: "More confident" },
+  { value: "same", label: "About the same" },
+  { value: "less", label: "Less confident" },
+] as const;
+
+/** Shown once, right after a call ends. Reuses the advisor-onboarding expertise
+ *  taxonomy for concern tags, so buyer demand and advisor supply speak the same
+ *  language for future matching/intelligence (no separate list to maintain). */
+function ReviewPrompt({ callId }: { callId: string }) {
+  const { data: existing, isLoading } = useReviewForCall(callId);
+  const submit = useSubmitReview();
+  const [rating, setRating] = useState(0);
+  const [confidenceShift, setConfidenceShift] = useState<"more" | "same" | "less" | undefined>();
+  const [tags, setTags] = useState<string[]>([]);
+  const [comment, setComment] = useState("");
+
+  if (isLoading) return null;
+
+  if (existing || submit.isSuccess) {
+    return (
+      <p className="mt-4 rounded-[10px] bg-[rgba(16,185,129,.08)] py-2.5 text-[12.5px] font-semibold text-green">
+        ✓ Thanks for rating this call
+      </p>
+    );
+  }
+
+  const toggleTag = (t: string) =>
+    setTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+
+  return (
+    <div className="mt-5 border-t border-border pt-5 text-left">
+      <p className="mb-2 text-center text-[13px] font-bold">How was the call?</p>
+      <div className="flex justify-center gap-1.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            onClick={() => setRating(n)}
+            aria-label={`${n} star${n > 1 ? "s" : ""}`}
+            className={cn("text-2xl transition-transform hover:scale-110", n <= rating ? "text-amber" : "text-border")}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+
+      {rating > 0 && (
+        <>
+          <div className="mt-4 flex justify-center gap-1.5">
+            {CONFIDENCE_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => setConfidenceShift(o.value)}
+                className={cn(
+                  "rounded-full border-[1.5px] px-2.5 py-1 text-[10.5px] font-semibold",
+                  confidenceShift === o.value
+                    ? "border-amber bg-amber-pale text-[#92400E]"
+                    : "border-[color:var(--border-2)] text-soft",
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+            {EXPERTISE.slice(0, 6).map((t) => (
+              <button
+                key={t}
+                onClick={() => toggleTag(t)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[10.5px] font-medium",
+                  tags.includes(t)
+                    ? "border-amber/40 bg-[rgba(245,158,11,.09)] text-[#92400E]"
+                    : "border-[color:var(--border-2)] text-soft",
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Anything else worth sharing? (optional)"
+            rows={2}
+            className="mt-3 w-full rounded-[10px] border-[1.5px] border-[color:var(--border-2)] px-3 py-2 text-[12.5px] outline-none focus:border-amber"
+          />
+
+          {submit.isError && (
+            <p className="mt-2 text-[11.5px] font-medium text-rose">{submit.error.message}</p>
+          )}
+
+          <Button
+            size="block"
+            className="mt-3 bg-amber text-ink hover:bg-amber-2"
+            disabled={submit.isPending}
+            onClick={() =>
+              submit.mutate({
+                callId,
+                rating,
+                confidenceShift,
+                concernTags: tags,
+                comment: comment.trim() || undefined,
+              })
+            }
+          >
+            {submit.isPending ? "Submitting…" : "Submit rating"}
+          </Button>
+        </>
+      )}
     </div>
   );
 }

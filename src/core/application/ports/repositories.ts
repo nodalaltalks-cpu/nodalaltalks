@@ -3,6 +3,7 @@ import type {
   AdvisorStatus,
   Call,
   Property,
+  Review,
   Transaction,
   User,
   Wallet,
@@ -78,4 +79,11 @@ export interface CallRepository {
   get(callId: string): Promise<Call | null>;
   update(callId: string, patch: Partial<Call>): Promise<void>;
   listRecentByBuyer(buyerId: string, max?: number): Promise<Call[]>;
+}
+
+/** Client-side, read-only reviews access (writes are server-owned — ReviewLedger). */
+export interface ReviewRepository {
+  listByAdvisor(advisorId: string, max?: number): Promise<Review[]>;
+  /** Doc id == callId; used to check whether a just-ended call has been reviewed yet. */
+  getByCall(callId: string): Promise<Review | null>;
 }

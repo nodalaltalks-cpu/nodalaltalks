@@ -13,7 +13,9 @@ export type {
   PayoutAccount,
   PayoutAccountRepository,
   CallRepository,
+  ReviewRepository,
 } from "./repositories";
+export type { ReviewLedger } from "./review-ledger";
 export type {
   PaymentGateway,
   CreateOrderInput,

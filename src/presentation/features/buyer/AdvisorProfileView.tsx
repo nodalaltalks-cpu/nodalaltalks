@@ -7,11 +7,13 @@ import { EVENT_NAMES } from "@core/domain/events";
 import { formatPaise } from "@core/domain/value-objects/money";
 import { useTrack } from "@/presentation/analytics/use-track";
 import { useRequestCall } from "@/presentation/features/calls/hooks";
+import { useAdvisorReviews } from "@/presentation/features/reviews/hooks";
 import { Button } from "@/presentation/components/ui/button";
 import { useAdvisorProfile } from "./hooks";
 
 export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   const { data, isLoading } = useAdvisorProfile(advisorId);
+  const { data: reviews } = useAdvisorReviews(advisorId);
   const track = useTrack();
   const router = useRouter();
   const requestCall = useRequestCall();
@@ -120,6 +122,34 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
           </p>
         )}
       </div>
+
+      {reviews && reviews.length > 0 && (
+        <div className="mt-5 rounded-[22px] border-[1.5px] border-border bg-white p-6 shadow-sh">
+          <h2 className="mb-4 text-[15px] font-extrabold">
+            What buyers say <span className="text-muted-foreground">({reviews.length})</span>
+          </h2>
+          <div className="flex flex-col gap-4">
+            {reviews.map((r) => (
+              <div key={r.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                <div className="flex items-center gap-1 text-amber">
+                  {"★".repeat(r.rating)}
+                  <span className="text-border">{"★".repeat(5 - r.rating)}</span>
+                </div>
+                {r.comment && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">{r.comment}</p>}
+                {r.concernTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {r.concernTags.map((t) => (
+                      <span key={t} className="rounded-full bg-surface px-2 py-0.5 text-[10.5px] font-medium text-soft">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

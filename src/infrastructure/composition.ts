@@ -6,6 +6,7 @@ import type { RoleClaimService } from "@core/application/ports";
 import { FirestoreUserRepository } from "./repositories/firestore-user-repository";
 import { FirestoreWalletRepository } from "./repositories/firestore-wallet-repository";
 import { FirestoreCallRepository } from "./repositories/firestore-call-repository";
+import { FirestoreReviewRepository } from "./repositories/firestore-review-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -100,12 +101,14 @@ export function buildCallReader() {
   return new FirestoreCallRepository(db);
 }
 
-/** Read-only repositories for rendering an advisor's review dossier. */
+/** Read-only repositories for rendering an advisor's dossier (profile,
+ *  documents, property, buyer reviews). */
 export function buildReviewReaders() {
   const { db } = getFirebaseClient();
   return {
     advisors: new FirestoreAdvisorProfileRepository(db),
     documents: new FirestoreDocumentRepository(db),
     properties: new FirestorePropertyRepository(db),
+    reviews: new FirestoreReviewRepository(db),
   };
 }

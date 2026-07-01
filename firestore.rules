@@ -124,15 +124,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── reviews: public read; buyer creates once; immutable thereafter. ──
+    // ── reviews: public read; SERVER-OWNED write. Submitting a review folds its
+    //    rating into advisor_profiles.ratingAvg/ratingCount, and only staff may
+    //    write that aggregate (see below) — so the write can only ever happen
+    //    through submitReview via the Admin SDK, never a direct client write. ──
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isSignedIn()
-                    && request.resource.data.buyerId == request.auth.uid
-                    && request.resource.data.rating is int
-                    && request.resource.data.rating >= 1
-                    && request.resource.data.rating <= 5;
-      allow update, delete: if isAdmin();
+      allow write: if false; // Admin SDK only
     }
 
     // ── analytics_events: THE append-only ledger. Create only; never mutate. ──
