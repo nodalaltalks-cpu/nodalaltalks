@@ -133,7 +133,14 @@ src/
   funnel; Revenue tab's leakage panel gained a "Low-Balance Blocks" tile.
   `advisorExpertise` (Advisor Intelligence) is still unused — a nested shape
   that needs its own component, left for a follow-up.
-- Phase 3 — Business / Advisor Intelligence _(next)_
+- **Feature 12 — Advisor Intelligence (live) ✅**: surfaced `advisorExpertise`
+  (delivered projects + buyer concern tags per advisor), the last
+  computed-but-unrendered field from Feature 11's audit. It's a nested
+  `Record<advisorId, Tally>`, not `BarList`-compatible, so added a new shared
+  primitive — `GroupedTags` in `metrics.tsx` — rather than a one-off. Lives in
+  the Marketplace tab as "Advisor Expertise & Specialization", next to
+  Conversion Rate and Supply/Demand.
+- Phase 3 — Business Intelligence _(next)_
 
 ### Firebase emulators
 
