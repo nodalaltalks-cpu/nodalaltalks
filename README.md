@@ -94,8 +94,18 @@ src/
   `payment_failed` events, and the buyer wallet UI. `Wallet`/`Transaction` carry
   `status`/`version`/`schemaVersion` for future migrations; the ledger already
   rejects writes against a frozen wallet.
-- Phase 2 — Calls · Reviews (`CallService` adapter; wallet `debit()` already
-  stubbed for call billing) _(next)_
+- **Feature 8 — Calls (live) ✅**: `requestCall` (client-side; connects instantly
+  through the placeholder `CallService`, no advisor-accept UI yet) and `endCall`
+  (server-side only, mirroring rechargeWallet) behind the event-versioned
+  envelope from Feature 7's refactor. Billing goes through a new
+  `WalletLedger.settleCall` — debits the buyer and records the advisor's payout
+  transaction atomically, so a charge can never exist without its payout line.
+  Commission rate is one isolated constant until `system_settings` exists.
+  Tightened `firestore.rules` so participants can progress a call's status but
+  can never write its billing fields or mark it `completed` client-side. Buyer
+  UI: "Talk Now" on the advisor profile → a live in-call screen with a running
+  cost estimate and hang-up.
+- Phase 2 — Reviews _(next)_
 
 ### Firebase emulators
 
