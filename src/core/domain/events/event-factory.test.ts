@@ -7,6 +7,9 @@ const ctx = {
   ts: 1_700_000_000_000,
   actor: { id: "u_1", type: "buyer" as const },
   sessionId: "s_1",
+  source: "web-app",
+  platform: "web" as const,
+  environment: "development" as const,
 };
 
 describe("createEvent()", () => {
@@ -21,6 +24,11 @@ describe("createEvent()", () => {
       sessionId: "s_1",
       entity: { buyerId: "u_1" },
       props: { budget: "₹1–2 Cr" },
+      eventVersion: 1,
+      schemaVersion: 1,
+      source: "web-app",
+      platform: "web",
+      environment: "development",
     });
   });
 

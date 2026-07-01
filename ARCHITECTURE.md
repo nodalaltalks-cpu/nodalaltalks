@@ -38,7 +38,12 @@ Ported directly from the approved `analytics.js` + `EVENT_ARCHITECTURE.md`:
 
 - The **only** write on a user action is appending an immutable event to the log
   (`analytics_events` in Firestore). Envelope:
-  `{ id, name, ts, actorId, actorType, sessionId, entity, props }`.
+  `{ id, name, ts, actorId, actorType, sessionId, entity, props, eventVersion,
+  schemaVersion, source, platform, environment }`. The last five are stamped by
+  `createEvent()` from an injected `RuntimeContext` (never read from ambient
+  `process.env` inside `src/core`) via the single `createEventEmitter()` helper
+  every use case shares — old events are never rewritten, only superseded by a
+  bumped `eventVersion`/`schemaVersion` on new ones.
 - **Read-models** (`users`, `advisor_profiles`, `calls`, `metrics_daily`, …) are
   **projections** of the log — caches, never authored directly. This is the
   Stripe/ledger pattern: events are immutable truth; everything else is derived.

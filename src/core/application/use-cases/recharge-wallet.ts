@@ -1,11 +1,13 @@
-import { EVENT_NAMES, createEvent } from "../../domain/events";
+import { EVENT_NAMES } from "../../domain/events";
 import { paiseToRupees } from "../../domain/value-objects/money";
+import { createEventEmitter } from "../events/create-emitter";
 import type {
   AuthUser,
   Clock,
   EventRepository,
   IdGenerator,
   PaymentGateway,
+  RuntimeContext,
   SessionProvider,
   WalletLedger,
 } from "../ports";
@@ -33,6 +35,7 @@ export interface RechargeWalletDeps {
   clock: Clock;
   ids: IdGenerator;
   session: SessionProvider;
+  runtime: RuntimeContext;
 }
 
 export interface RechargeWalletResult {
@@ -45,23 +48,11 @@ export async function rechargeWallet(
   input: RechargeWalletInput,
   deps: RechargeWalletDeps,
 ): Promise<RechargeWalletResult> {
-  const emit = (
-    name: (typeof EVENT_NAMES)[keyof typeof EVENT_NAMES],
-    props: Record<string, unknown>,
-  ) =>
-    deps.events.append(
-      createEvent(
-        name,
-        { actorId: actor.uid, actorType: "buyer", buyerId: actor.uid },
-        props,
-        {
-          id: deps.ids.next("e"),
-          ts: deps.clock.now(),
-          actor: { id: actor.uid, type: "buyer" },
-          sessionId: deps.session.sessionId(),
-        },
-      ),
-    );
+  const emit = createEventEmitter(
+    { id: actor.uid, type: "buyer" },
+    { actorId: actor.uid, actorType: "buyer", buyerId: actor.uid },
+    deps,
+  );
 
   const amountRupees = paiseToRupees(input.amountPaise);
 

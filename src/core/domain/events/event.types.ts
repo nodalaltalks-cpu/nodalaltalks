@@ -12,6 +12,12 @@ import type { EventName } from "./event-names";
 
 export type ActorType = "buyer" | "advisor" | "verifier" | "admin" | "system";
 
+/** Where the event was emitted from — the surface, not the deployment target. */
+export type Platform = "web" | "ios" | "android" | "server";
+
+/** Deployment tier at emission time, for filtering test/staging noise out of AI training data later. */
+export type Environment = "development" | "staging" | "production";
+
 export type BuyerStage =
   | "exploring"
   | "shortlisting"
@@ -121,6 +127,16 @@ export interface AnalyticsEvent {
   sessionId: string;
   entity: EventEntity;
   props: EventProps;
+
+  /** Shape version of THIS verb's `props`. Bump only when that verb's payload changes shape. */
+  eventVersion: number;
+  /** Shape version of the envelope itself (this interface). Bump only on an envelope change. */
+  schemaVersion: number;
+  /** Emitting app/surface, e.g. "web-app", "server-api". Free-form, not a closed enum — new
+   *  surfaces (Cloud Functions, mobile) add a new value, never redefine an old one. */
+  source: string;
+  platform: Platform;
+  environment: Environment;
 }
 
 /** The minimal user identity an event needs at creation time. */

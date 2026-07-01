@@ -1,6 +1,7 @@
-import { EVENT_NAMES, createEvent } from "../../domain/events";
+import { EVENT_NAMES } from "../../domain/events";
 import type { EventName } from "../../domain/events";
 import type { VerificationDocument } from "../../domain/entities";
+import { createEventEmitter } from "../events/create-emitter";
 import type {
   AdvisorProfileRepository,
   AuthUser,
@@ -9,6 +10,7 @@ import type {
   EventRepository,
   IdGenerator,
   RoleClaimService,
+  RuntimeContext,
   SessionProvider,
 } from "../ports";
 
@@ -31,28 +33,15 @@ export interface VerificationDeps {
   clock: Clock;
   ids: IdGenerator;
   session: SessionProvider;
+  runtime: RuntimeContext;
 }
 
 function emitter(verifier: AuthUser, advisorId: string, deps: VerificationDeps) {
-  return (name: EventName, props: Record<string, unknown> = {}) =>
-    deps.events.append(
-      createEvent(
-        name,
-        {
-          advisorId,
-          verifierId: verifier.uid,
-          actorId: verifier.uid,
-          actorType: "verifier",
-        },
-        props,
-        {
-          id: deps.ids.next("e"),
-          ts: deps.clock.now(),
-          actor: { id: verifier.uid, type: "verifier" },
-          sessionId: deps.session.sessionId(),
-        },
-      ),
-    );
+  return createEventEmitter(
+    { id: verifier.uid, type: "verifier" },
+    { advisorId, verifierId: verifier.uid, actorId: verifier.uid, actorType: "verifier" },
+    deps,
+  );
 }
 
 /** Verifier opens an application — moves submitted → under_review. */

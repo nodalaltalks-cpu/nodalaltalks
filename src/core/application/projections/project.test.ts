@@ -31,6 +31,11 @@ function ev(
     sessionId: "s_test",
     entity,
     props,
+    eventVersion: 1,
+    schemaVersion: 1,
+    source: "test",
+    platform: "web",
+    environment: "development",
   };
 }
 

@@ -12,6 +12,11 @@ function ev(name: string, ts: number, actorId = "a"): AnalyticsEvent {
     sessionId: "s",
     entity: {},
     props: {},
+    eventVersion: 1,
+    schemaVersion: 1,
+    source: "test",
+    platform: "web",
+    environment: "development",
   };
 }
 

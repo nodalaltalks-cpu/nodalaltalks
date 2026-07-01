@@ -1,17 +1,13 @@
 "use client";
 
 import { useCallback } from "react";
-import {
-  createEvent,
-  type EventEntity,
-  type EventName,
-  type EventProps,
-  type ActorType,
-} from "@core/domain/events";
+import { type EventEntity, type EventName, type EventProps, type ActorType } from "@core/domain/events";
+import { createEventEmitter } from "@core/application/events/create-emitter";
 import { getEventRepository } from "@infra/events/event-repository.factory";
 import { idGenerator } from "@infra/system/id-generator";
 import { systemClock } from "@infra/system/system-clock";
 import { sessionProvider } from "@infra/system/session-provider";
+import { webRuntimeContext } from "@infra/system/runtime-context";
 import { useAuth } from "@/presentation/providers/auth-provider";
 
 /**
@@ -31,15 +27,14 @@ export function useTrack() {
           : user.role
         : "buyer";
       const actor = { id: user?.uid ?? "anon", type };
-
-      void getEventRepository().append(
-        createEvent(name, entity, props, {
-          id: idGenerator.next("e"),
-          ts: systemClock.now(),
-          actor,
-          sessionId: sessionProvider.sessionId(),
-        }),
-      );
+      const emit = createEventEmitter(actor, {}, {
+        events: getEventRepository(),
+        clock: systemClock,
+        ids: idGenerator,
+        session: sessionProvider,
+        runtime: webRuntimeContext,
+      });
+      void emit(name, props, entity);
     },
     [user],
   );

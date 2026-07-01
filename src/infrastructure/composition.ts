@@ -9,6 +9,7 @@ import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
 import { sessionProvider } from "./system/session-provider";
+import { webRuntimeContext } from "./system/runtime-context";
 import { FirebaseStorageService } from "./storage/firebase-storage-service";
 import { HttpRoleClaimService } from "./auth/http-role-claim-service";
 import { FirestoreAdvisorProfileRepository } from "./repositories/firestore-advisor-profile-repository";
@@ -28,6 +29,7 @@ export function buildAdvisorOnboardingDeps(): SubmitAdvisorApplicationDeps {
     ids: idGenerator,
     clock: systemClock,
     session: sessionProvider,
+    runtime: webRuntimeContext,
     advisors: new FirestoreAdvisorProfileRepository(db),
     properties: new FirestorePropertyRepository(db),
     documents: new FirestoreDocumentRepository(db),
@@ -49,6 +51,7 @@ export function buildVerificationDeps(): VerificationDeps & {
     clock: systemClock,
     ids: idGenerator,
     session: sessionProvider,
+    runtime: webRuntimeContext,
     roleClaims: new HttpRoleClaimService(),
   };
 }
@@ -62,6 +65,7 @@ export function buildBuyerDeps(): RegisterBuyerDeps {
     clock: systemClock,
     ids: idGenerator,
     session: sessionProvider,
+    runtime: webRuntimeContext,
   };
 }
 

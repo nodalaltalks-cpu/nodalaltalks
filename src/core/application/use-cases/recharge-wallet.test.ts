@@ -39,6 +39,7 @@ function deps(overrides?: { verify?: PaymentResult }): {
     clock: { now: () => 1000 },
     ids: { next: (p = "e") => `${p}_${++n}` },
     session: { sessionId: () => "s" },
+    runtime: { source: () => "test", platform: () => "server", environment: () => "development" },
   };
   return { deps: d, events, balances };
 }

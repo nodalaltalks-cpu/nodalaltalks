@@ -27,6 +27,7 @@ function makeDeps() {
     ids: { next: (p = "e") => `${p}_${++n}` },
     clock: { now: () => 1_700_000_000_000 },
     session: { sessionId: () => "s_test" },
+    runtime: { source: () => "test", platform: () => "web", environment: () => "development" },
     advisors: {
       create: async (p) => void advisorsStore.set(p.advisorId, p),
       get: async (id) => advisorsStore.get(id) ?? null,

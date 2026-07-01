@@ -45,6 +45,12 @@ export class AdminEventRepository implements EventRepository {
         sessionId: data.sessionId,
         entity: data.entity ?? {},
         props: data.props ?? {},
+        // Pre-versioning events predate these fields; default to the v1 envelope.
+        eventVersion: data.eventVersion ?? 1,
+        schemaVersion: data.schemaVersion ?? 1,
+        source: data.source ?? "unknown",
+        platform: data.platform ?? "web",
+        environment: data.environment ?? "production",
       } as AnalyticsEvent;
     });
   }

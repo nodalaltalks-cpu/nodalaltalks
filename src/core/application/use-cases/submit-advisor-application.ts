@@ -1,10 +1,11 @@
-import { EVENT_NAMES, createEvent } from "../../domain/events";
+import { EVENT_NAMES } from "../../domain/events";
 import type {
   AdvisorProfile,
   Property,
   VerificationDocument,
 } from "../../domain/entities";
 import type { PossessionStatus } from "../../domain/entities";
+import { createEventEmitter } from "../events/create-emitter";
 import type {
   AdvisorProfileRepository,
   AuthUser,
@@ -15,6 +16,7 @@ import type {
   PayoutAccount,
   PayoutAccountRepository,
   PropertyRepository,
+  RuntimeContext,
   SessionProvider,
   StorageService,
 } from "../ports";
@@ -93,6 +95,7 @@ export interface SubmitAdvisorApplicationDeps {
   ids: IdGenerator;
   clock: Clock;
   session: SessionProvider;
+  runtime: RuntimeContext;
   advisors: AdvisorProfileRepository;
   properties: PropertyRepository;
   documents: DocumentRepository;
@@ -112,28 +115,15 @@ export async function submitAdvisorApplication(
   input: SubmitAdvisorApplicationInput,
   deps: SubmitAdvisorApplicationDeps,
 ): Promise<SubmitAdvisorApplicationResult> {
-  const { ids, clock, session, advisors, properties, documents, payouts, storage, events } =
-    deps;
+  const { ids, clock, advisors, properties, documents, payouts, storage } = deps;
   const advisorId = actor.uid;
   const now = clock.now();
 
-  const emit = (
-    name: (typeof EVENT_NAMES)[keyof typeof EVENT_NAMES],
-    props: Record<string, unknown> = {},
-  ) =>
-    events.append(
-      createEvent(
-        name,
-        { advisorId, actorId: advisorId, actorType: "advisor" },
-        props,
-        {
-          id: ids.next("e"),
-          ts: clock.now(),
-          actor: { id: advisorId, type: "advisor" },
-          sessionId: session.sessionId(),
-        },
-      ),
-    );
+  const emit = createEventEmitter(
+    { id: advisorId, type: "advisor" },
+    { advisorId, actorId: advisorId, actorType: "advisor" },
+    deps,
+  );
 
   await emit(EVENT_NAMES.ADVISOR_SIGNUP_STARTED, {
     name: `${input.personal.firstName} ${input.personal.lastName}`,

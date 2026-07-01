@@ -6,6 +6,7 @@ import { AdminEventRepository } from "./events/admin-event-repository";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
 import { sessionProvider } from "./system/session-provider";
+import { serverRuntimeContext } from "./system/runtime-context";
 
 /**
  * Server-side composition root. Wires privileged Admin-SDK adapters for use cases
@@ -23,5 +24,6 @@ export function buildRechargeDeps(): RechargeWalletDeps {
     clock: systemClock,
     ids: idGenerator,
     session: sessionProvider,
+    runtime: serverRuntimeContext,
   };
 }

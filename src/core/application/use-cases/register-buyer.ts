@@ -1,11 +1,13 @@
-import { EVENT_NAMES, createEvent } from "../../domain/events";
+import { EVENT_NAMES } from "../../domain/events";
 import type { BuyerStage } from "../../domain/events";
 import type { User } from "../../domain/entities";
+import { createEventEmitter } from "../events/create-emitter";
 import type {
   AuthUser,
   Clock,
   EventRepository,
   IdGenerator,
+  RuntimeContext,
   SessionProvider,
   UserRepository,
 } from "../ports";
@@ -34,6 +36,7 @@ export interface RegisterBuyerDeps {
   clock: Clock;
   ids: IdGenerator;
   session: SessionProvider;
+  runtime: RuntimeContext;
 }
 
 export async function registerBuyer(
@@ -64,26 +67,19 @@ export async function registerBuyer(
   };
   await deps.users.create(user);
 
-  await deps.events.append(
-    createEvent(
-      EVENT_NAMES.BUYER_SIGNUP,
-      { actorId: actor.uid, actorType: "buyer", buyerId: actor.uid },
-      {
-        name: input.displayName,
-        intent: input.intent,
-        targetProject: input.targetProject,
-        budget: input.budget,
-        stage: input.stage,
-        timeline: input.timeline,
-        targetCity: input.city,
-        source: input.source ?? "organic",
-      },
-      {
-        id: deps.ids.next("e"),
-        ts: now,
-        actor: { id: actor.uid, type: "buyer" },
-        sessionId: deps.session.sessionId(),
-      },
-    ),
+  const emit = createEventEmitter(
+    { id: actor.uid, type: "buyer" },
+    { actorId: actor.uid, actorType: "buyer", buyerId: actor.uid },
+    deps,
   );
+  await emit(EVENT_NAMES.BUYER_SIGNUP, {
+    name: input.displayName,
+    intent: input.intent,
+    targetProject: input.targetProject,
+    budget: input.budget,
+    stage: input.stage,
+    timeline: input.timeline,
+    targetCity: input.city,
+    source: input.source ?? "organic",
+  });
 }

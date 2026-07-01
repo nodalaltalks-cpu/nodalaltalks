@@ -9,4 +9,6 @@ export type {
   EventProps,
   ActorType,
   BuyerStage,
+  Platform,
+  Environment,
 } from "./event.types";

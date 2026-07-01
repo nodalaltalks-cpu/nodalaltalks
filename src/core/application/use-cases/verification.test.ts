@@ -80,6 +80,7 @@ function setup(docs: VerificationDocument[]) {
     clock: { now: () => 1000 },
     ids: { next: (p = "e") => `${p}_x` },
     session: { sessionId: () => "s" },
+    runtime: { source: () => "test", platform: () => "web", environment: () => "development" },
     roleClaims: roles,
   };
   return { deps, profiles, docStore, events, roles };

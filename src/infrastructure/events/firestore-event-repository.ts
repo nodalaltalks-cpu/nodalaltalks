@@ -82,6 +82,12 @@ export class FirestoreEventRepository implements EventRepository {
       sessionId: data.sessionId as string,
       entity: (data.entity as AnalyticsEvent["entity"]) ?? {},
       props: (data.props as AnalyticsEvent["props"]) ?? {},
+      // Pre-versioning events predate these fields; default to the v1 envelope.
+      eventVersion: (data.eventVersion as number) ?? 1,
+      schemaVersion: (data.schemaVersion as number) ?? 1,
+      source: (data.source as string) ?? "unknown",
+      platform: (data.platform as AnalyticsEvent["platform"]) ?? "web",
+      environment: (data.environment as AnalyticsEvent["environment"]) ?? "production",
     };
   }
 }
