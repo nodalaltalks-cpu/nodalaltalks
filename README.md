@@ -87,7 +87,15 @@ src/
   the event log → the same `project()` reducer → six derived sections (Executive,
   Marketplace, Growth/AARRR, Buyers, Revenue, Trust). Zero hardcoded values;
   founder/admin guard. With `EVENT_BACKEND=firestore` it's a real-time onSnapshot.
-- Phase 2 — Wallet · Calls · Reviews (PaymentGateway + CallService adapters) _(next)_
+- **Feature 7 — Wallet recharge (live) ✅**: `rechargeWallet` use case behind a
+  `PaymentGateway` port (placeholder today, Razorpay/Stripe later with no use-case
+  change), an Admin-SDK `WalletLedger` that atomically credits the wallet + writes
+  an immutable transaction in one Firestore transaction, `wallet_recharged` /
+  `payment_failed` events, and the buyer wallet UI. `Wallet`/`Transaction` carry
+  `status`/`version`/`schemaVersion` for future migrations; the ledger already
+  rejects writes against a frozen wallet.
+- Phase 2 — Calls · Reviews (`CallService` adapter; wallet `debit()` already
+  stubbed for call billing) _(next)_
 
 ### Firebase emulators
 
