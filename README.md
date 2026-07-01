@@ -116,7 +116,16 @@ src/
   advisorId with no proof of an actual call. Buyer UI: a rating prompt right
   after a call ends, and the public review list on the advisor profile.
   **Phase 2 (Wallet · Calls · Reviews) complete.**
-- Phase 3 — Marketplace / Business / Advisor / Buyer / Revenue Intelligence _(next)_
+- **Feature 10 — Marketplace Intelligence (live) ✅**: fixed a latent data-plumbing
+  gap — the Founder Dashboard's "Supply vs Demand by Project" panel had been
+  rendering empty since Feature 6 because neither `calls.ts` nor
+  `verification.ts` ever stamped `projectId` on the events `liquidityByProject`
+  reads. Both now resolve the advisor's primary property and carry it through
+  the relevant events (`Call.projectId`, previously unused, is now set at
+  request time). Added `advisorConversion` (view → request → completed funnel
+  per advisor) — the one genuinely missing metric — surfaced as a new panel
+  with a simple derived recommendation, no AI.
+- Phase 3 — Business / Advisor / Buyer / Revenue Intelligence _(next)_
 
 ### Firebase emulators
 
