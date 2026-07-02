@@ -167,10 +167,19 @@ src/
   (client, founder-only) — changes take effect immediately, no redeploy.
   `get()` always falls back to `DEFAULT_SYSTEM_SETTINGS` pre-configuration, so
   nothing breaks before a founder visits the screen.
+- **Feature 16 — Notifications (live) ✅**: closes out Phase 2 — Notifications
+  was explicitly scoped alongside Wallet/Calls/Reviews but never built (the
+  roadmap moved to Phase 3 before it landed). Gave the `NotificationService`
+  port (scaffolded since Feature 2, zero consumers until now) its first real
+  caller: `endCall` now sends both buyer and advisor an in-app receipt
+  (`NotificationRepository`, real Firestore write) plus a placeholder push
+  attempt. New `/buyer/notifications` inbox. Deliberately scoped to one
+  trigger (call completion) to prove the full loop end-to-end rather than
+  touching every use case in one pass.
 - Phase 4 — NoDalalTalks Intelligence (AI-powered: demand/supply prediction,
   recommendations, conversation intelligence) _(next, when explicitly scoped —
   asked mid-session whether to scope it now or stay in prep mode; answer was
-  prep mode, hence Features 14–15)_
+  prep mode, hence Features 14–16)_
 
 ### Firebase emulators
 
