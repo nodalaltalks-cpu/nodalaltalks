@@ -41,6 +41,11 @@ export function getFirebaseClient(): FirebaseClient {
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8080);
     connectStorageEmulator(storage, "127.0.0.1", 9199);
+    // The emulator never validates reCAPTCHA server-side, but RecaptchaVerifier
+    // still tries to load Google's real widget script by default — this is
+    // Firebase's documented emulator-only escape hatch, only ever set when
+    // already talking to the emulator, never in production.
+    auth.settings.appVerificationDisabledForTesting = true;
     emulatorsConnected = true;
   }
 
