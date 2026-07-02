@@ -2,11 +2,21 @@
 
 import { useState } from "react";
 import { isAdminRole } from "@core/domain/value-objects/role";
-import type { Metrics } from "@core/application/projections";
+import { comparePeriod, type Metrics } from "@core/application/projections";
 import { useAuth } from "@/presentation/providers/auth-provider";
 import { BarList, Funnel, GroupedTags, Panel, StatTile } from "@/presentation/components/ui/metrics";
 import { cn } from "@/lib/utils";
 import { useMetrics } from "./use-metrics";
+import { useWeeklyTrend, type WeeklyTrend } from "./use-trend";
+
+/** "▲12% vs last week" / "▼5% vs last week" / "— no prior week to compare" */
+function trendSub(trend: WeeklyTrend | null, field: "activeBuyers" | "completedCalls" | "netRevenue"): string {
+  if (!trend) return "vs last week…";
+  const { deltaPct } = comparePeriod(trend.current[field], trend.previous[field]);
+  if (deltaPct === null) return "— no prior week to compare";
+  const arrow = deltaPct > 0 ? "▲" : deltaPct < 0 ? "▼" : "—";
+  return `${arrow} ${Math.abs(deltaPct)}% vs last week`;
+}
 
 const inr = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const TABS = ["Executive", "Marketplace", "Growth", "Buyers", "Revenue", "Trust"] as const;
@@ -15,6 +25,7 @@ type Tab = (typeof TABS)[number];
 export function FounderDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { metrics, loading } = useMetrics();
+  const { trend } = useWeeklyTrend();
   const [tab, setTab] = useState<Tab>("Executive");
 
   if (authLoading) {
@@ -68,26 +79,26 @@ export function FounderDashboard() {
           ))}
         </div>
       ) : (
-        <Sections tab={tab} m={metrics} />
+        <Sections tab={tab} m={metrics} trend={trend} />
       )}
     </div>
   );
 }
 
-function Sections({ tab, m }: { tab: Tab; m: Metrics }) {
+function Sections({ tab, m, trend }: { tab: Tab; m: Metrics; trend: WeeklyTrend | null }) {
   if (tab === "Executive") {
     return (
       <div className="space-y-4">
         <Grid>
           <StatTile tone="north" label="⭐ Trusted Consultation Min" value={m.tcm.toLocaleString("en-IN")} sub="North Star · completed & rated ≥4" />
           <StatTile tone={m.matchRate < 60 ? "alert" : "default"} label="Call Match Rate" value={`${m.matchRate}%`} sub="requested → completed" />
-          <StatTile label="Net Revenue" value={inr(m.netRevenue)} sub="charged − advisor payout" />
+          <StatTile label="Net Revenue" value={inr(m.netRevenue)} sub={trendSub(trend, "netRevenue")} />
           <StatTile label="NDT Trust Index" value={m.ndtTrustIndex} sub="composite 0–100" />
         </Grid>
         <Grid>
-          <StatTile label="Active Buyers" value={m.activeBuyers.toLocaleString("en-IN")} />
+          <StatTile label="Active Buyers" value={m.activeBuyers.toLocaleString("en-IN")} sub={trendSub(trend, "activeBuyers")} />
           <StatTile label="Active Advisors" value={m.activeAdvisors.toLocaleString("en-IN")} />
-          <StatTile label="Completed Calls" value={m.completedCalls.toLocaleString("en-IN")} />
+          <StatTile label="Completed Calls" value={m.completedCalls.toLocaleString("en-IN")} sub={trendSub(trend, "completedCalls")} />
           <StatTile label="Avg Rating" value={m.avgRating || "—"} />
         </Grid>
         <Grid>
