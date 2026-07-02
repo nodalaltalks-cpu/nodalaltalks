@@ -159,9 +159,18 @@ src/
   **not** add a speculative `AIInsightsService`-style port — every port in
   this codebase is defined next to its first real consumer, and nothing
   consumes one yet.
+- **Feature 15 — System Settings (live) ✅**: founder-configurable commission
+  rate and wallet recharge limits, resolving a shortcut Feature 8 explicitly
+  flagged ("hardcoded because system_settings doesn't exist yet"). New
+  `system_settings/global` singleton, read by `endCall` and the recharge
+  route's bounds check (server) and by a new `/founder/settings` screen
+  (client, founder-only) — changes take effect immediately, no redeploy.
+  `get()` always falls back to `DEFAULT_SYSTEM_SETTINGS` pre-configuration, so
+  nothing breaks before a founder visits the screen.
 - Phase 4 — NoDalalTalks Intelligence (AI-powered: demand/supply prediction,
-  recommendations, conversation intelligence) _(next; still architecture-prep
-  only per the standing brief — no AI models get built until explicitly scoped)_
+  recommendations, conversation intelligence) _(next, when explicitly scoped —
+  asked mid-session whether to scope it now or stay in prep mode; answer was
+  prep mode, hence Features 14–15)_
 
 ### Firebase emulators
 
