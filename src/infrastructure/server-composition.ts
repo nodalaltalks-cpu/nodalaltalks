@@ -6,6 +6,7 @@ import { PlaceholderPaymentGateway } from "./payments/placeholder-payment-gatewa
 import { AdminWalletLedger } from "./repositories/admin-wallet-ledger";
 import { AdminCallRepository } from "./repositories/admin-call-repository";
 import { AdminReviewLedger } from "./repositories/admin-review-ledger";
+import { AdminSystemSettingsRepository } from "./repositories/admin-system-settings-repository";
 import { AdminEventRepository } from "./events/admin-event-repository";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
@@ -37,12 +38,18 @@ export function buildEndCallDeps(): EndCallDeps {
   return {
     calls: new AdminCallRepository(),
     ledger: new AdminWalletLedger(),
+    settings: new AdminSystemSettingsRepository(),
     events: new AdminEventRepository(),
     clock: systemClock,
     ids: idGenerator,
     session: sessionProvider,
     runtime: serverRuntimeContext,
   };
+}
+
+/** Reads system_settings/global from server routes (e.g. recharge bounds). */
+export function buildSettingsReader(): AdminSystemSettingsRepository {
+  return new AdminSystemSettingsRepository();
 }
 
 /** Deps for submitReview — the server-owned half (advisor rating aggregate). */

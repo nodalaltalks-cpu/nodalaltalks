@@ -42,7 +42,7 @@ const property: Property = {
   updatedAt: 0,
 };
 
-function harness(opts: { walletBalancePaise?: number } = {}) {
+function harness(opts: { walletBalancePaise?: number; commissionRate?: number } = {}) {
   const events = new InMemoryEventRepository();
   const calls = new Map<string, Call>();
   const wallets = new Map<string, Wallet>([
@@ -99,6 +99,15 @@ function harness(opts: { walletBalancePaise?: number } = {}) {
   let settled: CallSettlement | null = null;
   const endDeps: EndCallDeps = {
     calls: callRepo,
+    settings: {
+      get: async () => ({
+        platformCommissionRate: opts.commissionRate ?? 0.2,
+        walletRechargeMinPaise: 10_000,
+        walletRechargeMaxPaise: 5_000_000,
+        updatedAt: 0,
+      }),
+      update: async () => {},
+    },
     ledger: {
       credit: async (buyerId, amountPaise) => {
         const w = wallets.get(buyerId)!;
@@ -210,5 +219,18 @@ describe("endCall", () => {
     await expect(endCall("nonexistent", buyer, "buyer_hangup", t.endDeps)).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it("uses the founder-configured commission rate, not a hardcoded one", async () => {
+    const t = harness({ commissionRate: 0.3 }); // founder set 30% instead of the 20% default
+    const { call } = await requestCall(buyer, { advisorId: "adv_1" }, t.deps);
+    const laterClock: EndCallDeps = {
+      ...t.endDeps,
+      clock: { now: () => t.deps.clock.now() + 90_000 },
+    };
+    const ended = await endCall(call.id, buyer, "buyer_hangup", laterClock);
+
+    expect(ended.amountChargedPaise).toBe(10_000); // ₹100 charged, same as before
+    expect(ended.advisorPayoutPaise).toBe(7_000); // 70% of ₹100, not 80%
   });
 });

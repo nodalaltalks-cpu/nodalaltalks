@@ -15,6 +15,7 @@ import type {
   PropertyRepository,
   RuntimeContext,
   SessionProvider,
+  SystemSettingsRepository,
   WalletLedger,
   WalletRepository,
 } from "../ports";
@@ -181,6 +182,7 @@ export async function cancelCall(
 export interface EndCallDeps {
   calls: CallRepository;
   ledger: WalletLedger;
+  settings: SystemSettingsRepository;
   events: EventRepository;
   clock: Clock;
   ids: IdGenerator;
@@ -218,7 +220,8 @@ export async function endCall(
   const durationSec = Math.max(1, Math.round((now - call.startedAt) / 1000));
   const billableMinutes = Math.max(MIN_BILLABLE_MINUTES, Math.ceil(durationSec / 60));
   const amountChargedPaise = billableMinutes * call.ratePerMinPaise;
-  const { advisorPayoutPaise } = splitCallCharge(amountChargedPaise);
+  const settings = await deps.settings.get();
+  const { advisorPayoutPaise } = splitCallCharge(amountChargedPaise, settings.platformCommissionRate);
 
   await deps.ledger.settleCall({
     callId,

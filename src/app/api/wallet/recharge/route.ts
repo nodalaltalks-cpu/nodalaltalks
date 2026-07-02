@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { getFirebaseAdmin } from "@infra/firebase/admin";
-import { buildRechargeDeps } from "@infra/server-composition";
+import { buildRechargeDeps, buildSettingsReader } from "@infra/server-composition";
 import { rechargeWallet } from "@core/application/use-cases/recharge-wallet";
+import { formatPaise } from "@core/domain/value-objects/money";
 import { isRole, type Role } from "@core/domain/value-objects/role";
 
 /**
  * Wallet recharge endpoint. Authenticates the buyer, validates the amount, then
  * runs rechargeWallet server-side (payment verify → atomic credit → event). The
  * wallet/transactions collections are server-owned; this is the only write path.
+ * Bounds are founder-configurable (system_settings/global), not hardcoded.
  */
 export const runtime = "nodejs";
-
-const MIN_PAISE = 10_000; // ₹100
-const MAX_PAISE = 5_000_000; // ₹50,000
 
 export async function POST(req: Request) {
   const { auth } = getFirebaseAdmin();
@@ -33,14 +32,17 @@ export async function POST(req: Request) {
     method?: string;
   } | null;
   const amountPaise = body?.amountPaise;
+  const settings = await buildSettingsReader().get();
   if (
     typeof amountPaise !== "number" ||
     !Number.isInteger(amountPaise) ||
-    amountPaise < MIN_PAISE ||
-    amountPaise > MAX_PAISE
+    amountPaise < settings.walletRechargeMinPaise ||
+    amountPaise > settings.walletRechargeMaxPaise
   ) {
     return NextResponse.json(
-      { error: "Amount must be a whole number between ₹100 and ₹50,000." },
+      {
+        error: `Amount must be a whole number between ${formatPaise(settings.walletRechargeMinPaise)} and ${formatPaise(settings.walletRechargeMaxPaise)}.`,
+      },
       { status: 400 },
     );
   }

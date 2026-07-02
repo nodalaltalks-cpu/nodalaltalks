@@ -4,6 +4,7 @@ import type {
   Call,
   Property,
   Review,
+  SystemSettings,
   Transaction,
   User,
   Wallet,
@@ -86,4 +87,16 @@ export interface ReviewRepository {
   listByAdvisor(advisorId: string, max?: number): Promise<Review[]>;
   /** Doc id == callId; used to check whether a just-ended call has been reviewed yet. */
   getByCall(callId: string): Promise<Review | null>;
+}
+
+/**
+ * system_settings/global. `get()` never throws/returns null — it falls back
+ * to DEFAULT_SYSTEM_SETTINGS so every consumer works before a founder has
+ * ever visited the settings screen. `update()` is a founder-only client path
+ * (Security Rules: isAdmin()); reads happen from both client (settings
+ * screen) and server (endCall, wallet recharge bounds).
+ */
+export interface SystemSettingsRepository {
+  get(): Promise<SystemSettings>;
+  update(patch: Partial<SystemSettings>, updatedBy: string): Promise<void>;
 }

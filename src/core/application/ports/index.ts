@@ -15,6 +15,7 @@ export type {
   PayoutAccountRepository,
   CallRepository,
   ReviewRepository,
+  SystemSettingsRepository,
 } from "./repositories";
 export type { ReviewLedger } from "./review-ledger";
 export type {

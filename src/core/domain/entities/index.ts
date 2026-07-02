@@ -7,6 +7,8 @@ export type { Wallet } from "./wallet";
 export type { Transaction, TransactionType } from "./transaction";
 export type { Review } from "./review";
 export type { Notification } from "./notification";
+export type { SystemSettings } from "./system-settings";
+export { DEFAULT_SYSTEM_SETTINGS } from "./system-settings";
 
 export { ROLES, isRole, isStaffRole, isAdminRole } from "../value-objects/role";
 export type { Role } from "../value-objects/role";

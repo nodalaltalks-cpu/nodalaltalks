@@ -7,6 +7,7 @@ import { FirestoreUserRepository } from "./repositories/firestore-user-repositor
 import { FirestoreWalletRepository } from "./repositories/firestore-wallet-repository";
 import { FirestoreCallRepository } from "./repositories/firestore-call-repository";
 import { FirestoreReviewRepository } from "./repositories/firestore-review-repository";
+import { FirestoreSystemSettingsRepository } from "./repositories/firestore-system-settings-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -103,6 +104,12 @@ export function buildCallDeps(): CallDeps {
 export function buildCallReader() {
   const { db } = getFirebaseClient();
   return new FirestoreCallRepository(db);
+}
+
+/** Founder-only settings screen (read + update system_settings/global). */
+export function buildSettingsRepo() {
+  const { db } = getFirebaseClient();
+  return new FirestoreSystemSettingsRepository(db);
 }
 
 /** Read-only repositories for rendering an advisor's dossier (profile,

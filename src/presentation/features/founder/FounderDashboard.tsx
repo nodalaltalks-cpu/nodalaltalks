@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { isAdminRole } from "@core/domain/value-objects/role";
 import { comparePeriod, type Metrics } from "@core/application/projections";
 import { useAuth } from "@/presentation/providers/auth-provider";
@@ -44,17 +45,25 @@ export function FounderDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-[4%] py-10">
-      <div className="mb-6">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber/30 bg-amber-pale px-3.5 py-1.5 text-[11.5px] font-bold text-[#92400E]">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber" />
-          LIVE · EVERY NUMBER DERIVED FROM EVENTS
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber/30 bg-amber-pale px-3.5 py-1.5 text-[11.5px] font-bold text-[#92400E]">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber" />
+            LIVE · EVERY NUMBER DERIVED FROM EVENTS
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Founder Cockpit</h1>
+          <p className="mt-1 text-[13.5px] text-muted-foreground">
+            Computed in real time from the append-only event log — zero hardcoded
+            values. As advisors onboard, get verified, and buyers sign up, these
+            update automatically.
+          </p>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Founder Cockpit</h1>
-        <p className="mt-1 text-[13.5px] text-muted-foreground">
-          Computed in real time from the append-only event log — zero hardcoded
-          values. As advisors onboard, get verified, and buyers sign up, these
-          update automatically.
-        </p>
+        <Link
+          href="/founder/settings"
+          className="flex-shrink-0 rounded-[10px] border-[1.5px] border-[color:var(--border-2)] px-4 py-2.5 text-[12.5px] font-bold text-muted-foreground hover:border-ink hover:text-ink"
+        >
+          ⚙ Settings
+        </Link>
       </div>
 
       <div className="mb-6 inline-flex flex-wrap gap-1 rounded-xl bg-surface-2 p-1">
