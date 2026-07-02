@@ -7,7 +7,9 @@ import { AdminWalletLedger } from "./repositories/admin-wallet-ledger";
 import { AdminCallRepository } from "./repositories/admin-call-repository";
 import { AdminReviewLedger } from "./repositories/admin-review-ledger";
 import { AdminSystemSettingsRepository } from "./repositories/admin-system-settings-repository";
+import { AdminNotificationRepository } from "./repositories/admin-notification-repository";
 import { AdminEventRepository } from "./events/admin-event-repository";
+import { notificationService } from "./notifications/console-notification-service";
 import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
 import { sessionProvider } from "./system/session-provider";
@@ -39,6 +41,8 @@ export function buildEndCallDeps(): EndCallDeps {
     calls: new AdminCallRepository(),
     ledger: new AdminWalletLedger(),
     settings: new AdminSystemSettingsRepository(),
+    notifications: new AdminNotificationRepository(),
+    notify: notificationService,
     events: new AdminEventRepository(),
     clock: systemClock,
     ids: idGenerator,

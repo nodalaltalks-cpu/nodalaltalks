@@ -49,6 +49,7 @@ export function CallView({ callId }: { callId: string }) {
             {Math.floor((call.durationSec ?? 0) / 60)}m {(call.durationSec ?? 0) % 60}s ·{" "}
             {formatPaise(call.amountChargedPaise ?? 0)} charged
           </p>
+          <p className="mt-3 text-[11px] text-soft">🔔 A receipt was sent to your notifications.</p>
           <ReviewPrompt callId={callId} />
           <Button
             variant="ghost"

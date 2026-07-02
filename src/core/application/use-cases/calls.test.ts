@@ -4,8 +4,8 @@ import type { CallDeps, EndCallDeps } from "./calls";
 import { InMemoryEventRepository } from "@infra/events/in-memory-event-repository";
 import { PlaceholderCallService } from "@infra/calling/placeholder-call-service";
 import { project } from "../projections/project";
-import type { AdvisorProfile, Call, Property, Wallet } from "../../domain/entities";
-import type { AuthUser, CallSettlement } from "../ports";
+import type { AdvisorProfile, Call, Notification, Property, Wallet } from "../../domain/entities";
+import type { AuthUser, CallSettlement, PushMessage } from "../ports";
 
 const buyer: AuthUser = { uid: "b1", role: "buyer" };
 
@@ -97,8 +97,16 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number } 
   };
 
   let settled: CallSettlement | null = null;
+  const notifications: Notification[] = [];
+  const pushed: PushMessage[] = [];
   const endDeps: EndCallDeps = {
     calls: callRepo,
+    notifications: {
+      create: async (notif) => void notifications.push(notif),
+      listByUser: async (userId) => notifications.filter((x) => x.userId === userId),
+      markRead: async () => {},
+    },
+    notify: { push: async (msg) => void pushed.push(msg) },
     settings: {
       get: async () => ({
         platformCommissionRate: opts.commissionRate ?? 0.2,
@@ -134,7 +142,7 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number } 
     runtime: deps.runtime,
   };
 
-  return { deps, endDeps, events, calls, wallets, getSettled: () => settled };
+  return { deps, endDeps, events, calls, wallets, notifications, pushed, getSettled: () => settled };
 }
 
 describe("requestCall", () => {
@@ -212,6 +220,12 @@ describe("endCall", () => {
     expect(m.completedCalls).toBe(1);
     expect(m.advisorPayout).toBe(80); // ₹80
     expect(m.netRevenue).toBe(20); // ₹100 charged − ₹80 payout = ₹20 platform take
+
+    // Both sides get a receipt: in-app notification + a push attempt.
+    expect(t.notifications).toHaveLength(2);
+    expect(t.notifications.find((x) => x.userId === "b1")?.body).toContain("₹100");
+    expect(t.notifications.find((x) => x.userId === "adv_1")?.body).toContain("₹80");
+    expect(t.pushed.map((p) => p.to)).toEqual(["b1", "adv_1"]);
   });
 
   it("refuses to end a call that hasn't started", async () => {

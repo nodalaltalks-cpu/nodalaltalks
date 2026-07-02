@@ -2,6 +2,7 @@ import type {
   AdvisorProfile,
   AdvisorStatus,
   Call,
+  Notification,
   Property,
   Review,
   SystemSettings,
@@ -99,4 +100,14 @@ export interface ReviewRepository {
 export interface SystemSettingsRepository {
   get(): Promise<SystemSettings>;
   update(patch: Partial<SystemSettings>, updatedBy: string): Promise<void>;
+}
+
+/**
+ * notifications/{id}. Server-only create (Security Rules); the recipient may
+ * only flip `read`. list/markRead power the recipient's in-app inbox.
+ */
+export interface NotificationRepository {
+  create(notification: Notification): Promise<void>;
+  listByUser(userId: string, max?: number): Promise<Notification[]>;
+  markRead(notificationId: string): Promise<void>;
 }

@@ -8,6 +8,7 @@ import { FirestoreWalletRepository } from "./repositories/firestore-wallet-repos
 import { FirestoreCallRepository } from "./repositories/firestore-call-repository";
 import { FirestoreReviewRepository } from "./repositories/firestore-review-repository";
 import { FirestoreSystemSettingsRepository } from "./repositories/firestore-system-settings-repository";
+import { FirestoreNotificationRepository } from "./repositories/firestore-notification-repository";
 import { getFirebaseClient } from "./firebase/client";
 import { getEventRepository } from "./events/event-repository.factory";
 import { systemClock } from "./system/system-clock";
@@ -110,6 +111,12 @@ export function buildCallReader() {
 export function buildSettingsRepo() {
   const { db } = getFirebaseClient();
   return new FirestoreSystemSettingsRepository(db);
+}
+
+/** The signed-in user's own notification inbox (list + markRead). */
+export function buildNotificationReader() {
+  const { db } = getFirebaseClient();
+  return new FirestoreNotificationRepository(db);
 }
 
 /** Read-only repositories for rendering an advisor's dossier (profile,

@@ -16,6 +16,7 @@ export type {
   CallRepository,
   ReviewRepository,
   SystemSettingsRepository,
+  NotificationRepository,
 } from "./repositories";
 export type { ReviewLedger } from "./review-ledger";
 export type {

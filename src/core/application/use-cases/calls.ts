@@ -1,6 +1,6 @@
 import { EVENT_NAMES } from "../../domain/events";
 import type { Call } from "../../domain/entities";
-import { paiseToRupees } from "../../domain/value-objects/money";
+import { formatPaise, paiseToRupees } from "../../domain/value-objects/money";
 import { splitCallCharge } from "../../domain/value-objects/commission";
 import { createEventEmitter } from "../events/create-emitter";
 import type {
@@ -12,6 +12,8 @@ import type {
   Clock,
   EventRepository,
   IdGenerator,
+  NotificationRepository,
+  NotificationService,
   PropertyRepository,
   RuntimeContext,
   SessionProvider,
@@ -183,6 +185,8 @@ export interface EndCallDeps {
   calls: CallRepository;
   ledger: WalletLedger;
   settings: SystemSettingsRepository;
+  notifications: NotificationRepository;
+  notify: NotificationService;
   events: EventRepository;
   clock: Clock;
   ids: IdGenerator;
@@ -254,6 +258,36 @@ export async function endCall(
     advisorPayout: paiseToRupees(advisorPayoutPaise),
     endReason,
   });
+
+  // Both sides get a receipt — in-app notification (real, read by the
+  // recipient's inbox) plus a push attempt through the placeholder adapter,
+  // which becomes real once FCM replaces it, no use-case change needed.
+  const buyerNotification = {
+    id: deps.ids.next("notif"),
+    userId: call.buyerId,
+    type: "call_completed",
+    title: "Call ended",
+    body: `${Math.round(durationSec / 60)} min call — ${formatPaise(amountChargedPaise)} charged.`,
+    read: false,
+    data: { callId },
+    createdAt: now,
+  };
+  const advisorNotification = {
+    id: deps.ids.next("notif"),
+    userId: call.advisorId,
+    type: "call_completed",
+    title: "You completed a call",
+    body: `You earned ${formatPaise(advisorPayoutPaise)}.`,
+    read: false,
+    data: { callId },
+    createdAt: now,
+  };
+  await Promise.all([
+    deps.notifications.create(buyerNotification),
+    deps.notifications.create(advisorNotification),
+    deps.notify.push({ to: call.buyerId, title: buyerNotification.title, body: buyerNotification.body, data: { callId } }),
+    deps.notify.push({ to: call.advisorId, title: advisorNotification.title, body: advisorNotification.body, data: { callId } }),
+  ]);
 
   return { ...call, ...patch };
 }
