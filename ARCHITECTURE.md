@@ -89,7 +89,25 @@ No AI is built yet — but the event log *is* the training/feature substrate. Ev
 future question ("which builder has the highest demand?", "which advisors convert
 best?", "what concerns dominate?") is answerable by reading
 `analytics_events`. New intelligence = new projections over the same log, added
-without changing existing architecture.
+without changing existing architecture. Phase 3 (Features 10–13) exercised this
+directly: every Intelligence slice was either a `project()` addition or, twice,
+discovered that the field already existed and just needed real event data
+flowing into it — see the README changelog for specifics.
+
+**Documents are the other seam prepared for Phase 4** (`VerificationDocument`,
+`src/core/domain/entities/document.ts`): `contentHash` (computed today, via the
+injected `HashService` port — duplicate-document detection groundwork),
+`ocrStatus` / `aiProcessingStatus` (honestly `"pending"` — no pipeline runs yet,
+these are the exact fields a future one would flip), and `retrievalTags` (fully
+unpopulated — the seam for future semantic search). No pipeline exists; only the
+schema does, so building one later is additive, not a migration.
+
+**No speculative AI ports.** `HashService` earns its place because it has a real
+caller (`submitAdvisorApplication`) today. A hypothetical `AIInsightsService` or
+similar does not yet — adding an interface with zero call sites would be dead
+code, not preparation. When Phase 4 gets scoped, the pattern to follow is the
+same one every port in this codebase already uses: define the interface next to
+its first real consumer, not in advance of one.
 
 ## Testing
 

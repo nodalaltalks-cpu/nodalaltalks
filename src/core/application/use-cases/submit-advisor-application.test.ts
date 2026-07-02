@@ -58,6 +58,7 @@ function makeDeps() {
       getDownloadUrl: async (p) => `https://storage.test/${p}`,
       delete: async () => {},
     },
+    hash: { sha256: async () => "fake_hash" },
     events,
   };
   return { deps, advisorsStore, propsStore, docsStore, payoutStore, uploaded, events };
@@ -129,6 +130,12 @@ describe("submitAdvisorApplication", () => {
     expect(t.propsStore).toHaveLength(1);
     expect(t.docsStore).toHaveLength(2);
     expect(t.docsStore.every((d) => d.status === "uploaded")).toBe(true);
+    // Intelligence-ready fields: computed now (hash, source) vs. honestly
+    // "pending" until a real OCR/AI pipeline exists.
+    expect(t.docsStore.every((d) => d.contentHash === "fake_hash")).toBe(true);
+    expect(t.docsStore.every((d) => d.uploadSource === "test")).toBe(true);
+    expect(t.docsStore.every((d) => d.ocrStatus === "pending")).toBe(true);
+    expect(t.docsStore.every((d) => d.aiProcessingStatus === "pending")).toBe(true);
     expect(t.uploaded).toHaveLength(2);
     expect(t.payoutStore.get("adv_1")?.bankName).toBe("HDFC Bank");
   });

@@ -1,7 +1,7 @@
 export type { User, BuyerIntent } from "./user";
 export type { AdvisorProfile, AdvisorStatus } from "./advisor-profile";
 export type { Property, PossessionStatus } from "./property";
-export type { VerificationDocument, DocumentStatus } from "./document";
+export type { VerificationDocument, DocumentStatus, DocumentProcessingStatus } from "./document";
 export type { Call, CallStatus } from "./call";
 export type { Wallet } from "./wallet";
 export type { Transaction, TransactionType } from "./transaction";

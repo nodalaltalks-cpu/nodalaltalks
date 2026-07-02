@@ -12,6 +12,7 @@ import type {
   Clock,
   DocumentRepository,
   EventRepository,
+  HashService,
   IdGenerator,
   PayoutAccount,
   PayoutAccountRepository,
@@ -101,6 +102,7 @@ export interface SubmitAdvisorApplicationDeps {
   documents: DocumentRepository;
   payouts: PayoutAccountRepository;
   storage: StorageService;
+  hash: HashService;
   events: EventRepository;
 }
 
@@ -115,7 +117,7 @@ export async function submitAdvisorApplication(
   input: SubmitAdvisorApplicationInput,
   deps: SubmitAdvisorApplicationDeps,
 ): Promise<SubmitAdvisorApplicationResult> {
-  const { ids, clock, advisors, properties, documents, payouts, storage } = deps;
+  const { ids, clock, advisors, properties, documents, payouts, storage, hash, runtime } = deps;
   const advisorId = actor.uid;
   const now = clock.now();
 
@@ -164,9 +166,10 @@ export async function submitAdvisorApplication(
   for (const upload of input.documents) {
     const documentId = ids.next("doc");
     const path = `documents/${advisorId}/${upload.docType}_${documentId}_${upload.fileName}`;
-    const stored = await storage.upload(path, upload.file, {
-      contentType: upload.mimeType,
-    });
+    const [stored, contentHash] = await Promise.all([
+      storage.upload(path, upload.file, { contentType: upload.mimeType }),
+      hash.sha256(await upload.file.arrayBuffer()),
+    ]);
 
     const doc: VerificationDocument = {
       id: documentId,
@@ -179,11 +182,17 @@ export async function submitAdvisorApplication(
       storagePath: stored.path,
       size: upload.size,
       mimeType: upload.mimeType,
+      contentHash,
+      uploadSource: runtime.source(),
       status: "uploaded",
       uploadedBy: advisorId,
       uploadedAt: now,
+      // No OCR/AI pipeline exists yet — "pending" is the honest state, not a stub value.
+      ocrStatus: "pending",
+      aiProcessingStatus: "pending",
       createdAt: now,
       updatedAt: now,
+      schemaVersion: 1,
     };
     await documents.create(doc);
     documentIds.push(documentId);

@@ -13,6 +13,7 @@ import { systemClock } from "./system/system-clock";
 import { idGenerator } from "./system/id-generator";
 import { sessionProvider } from "./system/session-provider";
 import { webRuntimeContext } from "./system/runtime-context";
+import { hashService } from "./system/web-crypto-hash-service";
 import { FirebaseStorageService } from "./storage/firebase-storage-service";
 import { HttpRoleClaimService } from "./auth/http-role-claim-service";
 import { PlaceholderCallService } from "./calling/placeholder-call-service";
@@ -39,6 +40,7 @@ export function buildAdvisorOnboardingDeps(): SubmitAdvisorApplicationDeps {
     documents: new FirestoreDocumentRepository(db),
     payouts: new FirestorePayoutAccountRepository(db),
     storage: new FirebaseStorageService(storage),
+    hash: hashService,
     events: getEventRepository(),
   };
 }

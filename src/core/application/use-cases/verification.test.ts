@@ -30,6 +30,7 @@ function doc(
     status,
     createdAt: 0,
     updatedAt: 0,
+    schemaVersion: 1,
   };
 }
 
