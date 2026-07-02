@@ -140,7 +140,19 @@ src/
   primitive — `GroupedTags` in `metrics.tsx` — rather than a one-off. Lives in
   the Marketplace tab as "Advisor Expertise & Specialization", next to
   Conversion Rate and Supply/Demand.
-- Phase 3 — Business Intelligence _(next)_
+- **Feature 13 — Business Intelligence (live) ✅**: week-over-week trend —
+  genuinely new, unlike F10-F12's mostly-surfacing work. `project()` stays
+  untouched (still one pure reducer over an arbitrary event slice); trend is
+  just calling it twice over two adjacent 7-day windows via the `since`/`until`
+  `EventQuery` filters every adapter already supports, and diffing with a new
+  `comparePeriod()` helper. One-shot query, not a live subscription — a trend
+  comparison doesn't need to be real-time. Executive tab's Net Revenue, Active
+  Buyers, and Completed Calls now show "▲12% vs last week" as their sub-label.
+  **Phase 3 (Marketplace · Buyer · Revenue · Advisor · Business Intelligence)
+  complete.**
+- Phase 4 — NoDalalTalks Intelligence (AI-powered: demand/supply prediction,
+  recommendations, conversation intelligence) _(next — architecture-prep only
+  per the standing brief; no AI models get built until explicitly scoped)_
 
 ### Firebase emulators
 
