@@ -150,9 +150,18 @@ src/
   Buyers, and Completed Calls now show "▲12% vs last week" as their sub-label.
   **Phase 3 (Marketplace · Buyer · Revenue · Advisor · Business Intelligence)
   complete.**
+- **Feature 14 — Document AI-readiness (live) ✅**: Phase 4 architecture prep,
+  no AI implemented. `VerificationDocument` gained `contentHash` (SHA-256,
+  computed for real via a new `HashService` port — duplicate-detection
+  groundwork), `uploadSource`, honestly-`"pending"` `ocrStatus`/
+  `aiProcessingStatus` (the exact fields a future pipeline flips), and
+  unpopulated `retrievalTags` (future semantic search seam). Deliberately did
+  **not** add a speculative `AIInsightsService`-style port — every port in
+  this codebase is defined next to its first real consumer, and nothing
+  consumes one yet.
 - Phase 4 — NoDalalTalks Intelligence (AI-powered: demand/supply prediction,
-  recommendations, conversation intelligence) _(next — architecture-prep only
-  per the standing brief; no AI models get built until explicitly scoped)_
+  recommendations, conversation intelligence) _(next; still architecture-prep
+  only per the standing brief — no AI models get built until explicitly scoped)_
 
 ### Firebase emulators
 
