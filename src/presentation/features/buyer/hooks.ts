@@ -27,17 +27,27 @@ export function useActiveAdvisors() {
   });
 }
 
-/** One advisor's public profile + their primary claimed property. */
+/**
+ * One advisor's public profile + their primary claimed property. `property`
+ * is enrichment only — Security Rules require sign-in to read `properties`
+ * (it holds financing details that must never be public), so a signed-out
+ * buyer browsing pre-signup gets `property: null` here and falls back to the
+ * public-safe fields already denormalized onto AdvisorProfile
+ * (primaryProject/primaryBuilder/primaryCity/expertise).
+ */
 export function useAdvisorProfile(advisorId: string) {
   return useQuery({
     queryKey: ["advisors", "profile", advisorId],
     queryFn: async () => {
       const { advisors, properties } = buildReviewReaders();
-      const [profile, props] = await Promise.all([
+      const [profileResult, propertiesResult] = await Promise.allSettled([
         advisors.get(advisorId),
         properties.listByAdvisor(advisorId),
       ]);
-      return { profile, property: props[0] ?? null };
+      if (profileResult.status === "rejected") throw profileResult.reason;
+      const property =
+        propertiesResult.status === "fulfilled" ? (propertiesResult.value[0] ?? null) : null;
+      return { profile: profileResult.value, property };
     },
   });
 }

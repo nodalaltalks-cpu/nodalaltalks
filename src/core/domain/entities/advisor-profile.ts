@@ -50,6 +50,16 @@ export interface AdvisorProfile {
   /** Primary property shown on the card; full list lives in properties/. */
   primaryPropertyId?: string;
 
+  // Public-safe copy of the primary property's non-sensitive fields, so a
+  // signed-out buyer browsing before signup can see them without Security
+  // Rules ever exposing the properties/ collection (which also holds
+  // financing details like homeLoan) to anonymous readers. Set once at
+  // submission from the same source of truth as primaryPropertyId.
+  primaryProject?: string;
+  primaryBuilder?: string;
+  primaryCity?: string;
+  expertise?: string[];
+
   createdAt: number;
   updatedAt: number;
 }

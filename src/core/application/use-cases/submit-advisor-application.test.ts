@@ -127,6 +127,15 @@ describe("submitAdvisorApplication", () => {
     expect(t.advisorsStore.get("adv_1")?.status).toBe("submitted");
     expect(t.advisorsStore.get("adv_1")?.ownershipVerified).toBe(false);
     expect(t.advisorsStore.get("adv_1")?.ratePerMinPaise).toBe(5000);
+    // Public-safe copy of the property, so signed-out buyers (Security Rules
+    // require sign-in to read properties/) can still see it pre-signup.
+    expect(t.advisorsStore.get("adv_1")?.primaryProject).toBe("Lodha Palava City");
+    expect(t.advisorsStore.get("adv_1")?.primaryBuilder).toBe("Lodha Group");
+    expect(t.advisorsStore.get("adv_1")?.primaryCity).toBe("Dombivali");
+    expect(t.advisorsStore.get("adv_1")?.expertise).toEqual([
+      "Possession delays & RERA",
+      "Construction quality",
+    ]);
     expect(t.propsStore).toHaveLength(1);
     expect(t.docsStore).toHaveLength(2);
     expect(t.docsStore.every((d) => d.status === "uploaded")).toBe(true);

@@ -21,12 +21,14 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   const [shortlisted, setShortlisted] = useState(false);
 
   // Fire advisor_profile_view exactly once, after the profile resolves.
+  // Uses profile.primaryProject (public, always available), not property —
+  // property is sign-in-gated, and most profile views are signed-out buyers.
   useEffect(() => {
     if (data?.profile && !viewed.current) {
       viewed.current = true;
       track(
         EVENT_NAMES.ADVISOR_PROFILE_VIEW,
-        { advisorId, projectId: data.property?.project },
+        { advisorId, projectId: data.profile.primaryProject ?? data.property?.project },
         { source: "search" },
       );
     }
@@ -44,11 +46,17 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   }
 
   const { profile, property } = data;
+  // property is enrichment-only (requires sign-in per Security Rules); the
+  // public-safe fields on profile are the source of truth for anonymous browsing.
+  const projectName = profile.primaryProject ?? property?.project;
+  const builderName = profile.primaryBuilder ?? property?.builder;
+  const cityName = profile.primaryCity ?? property?.city ?? profile.city;
+  const expertise = profile.expertise?.length ? profile.expertise : (property?.expertise ?? []);
 
   const shortlist = () => {
     if (shortlisted) return;
     setShortlisted(true);
-    track(EVENT_NAMES.ADVISOR_SHORTLISTED, { advisorId, projectId: property?.project });
+    track(EVENT_NAMES.ADVISOR_SHORTLISTED, { advisorId, projectId: projectName });
   };
 
   const talkNow = () => {
@@ -74,7 +82,7 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
               )}
             </h1>
             <p className="mt-1 text-[13.5px] text-muted-foreground">
-              {property ? `${property.project} · ${property.builder} · ${property.city}` : profile.city}
+              {projectName ? `${projectName} · ${builderName} · ${cityName}` : cityName}
             </p>
             <div className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
               <span className="text-amber">★</span>
@@ -86,9 +94,9 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
 
         {profile.bio && <p className="mt-5 text-sm leading-relaxed text-ink-2">{profile.bio}</p>}
 
-        {property?.expertise?.length ? (
+        {expertise.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2">
-            {property.expertise.map((t) => (
+            {expertise.map((t) => (
               <span key={t} className="rounded-full border border-amber/20 bg-[rgba(245,158,11,.09)] px-3 py-1 text-[11.5px] font-semibold text-[#92400E]">{t}</span>
             ))}
           </div>
