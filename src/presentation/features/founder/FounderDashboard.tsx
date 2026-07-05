@@ -25,8 +25,9 @@ type Tab = (typeof TABS)[number];
 
 export function FounderDashboard() {
   const { user, loading: authLoading } = useAuth();
-  const { metrics, loading } = useMetrics();
-  const { trend } = useWeeklyTrend();
+  const authorized = !authLoading && !!user && isAdminRole(user.role);
+  const { metrics, loading } = useMetrics(authorized);
+  const { trend } = useWeeklyTrend(authorized);
   const [tab, setTab] = useState<Tab>("Executive");
 
   if (authLoading) {

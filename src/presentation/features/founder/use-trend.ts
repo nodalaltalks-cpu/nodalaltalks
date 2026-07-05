@@ -18,10 +18,12 @@ export interface WeeklyTrend {
  * real-time, and two extra live listeners per dashboard load isn't worth the
  * cost for a comparison that's only meaningful re-checked periodically.
  */
-export function useWeeklyTrend(): { trend: WeeklyTrend | null; loading: boolean } {
+export function useWeeklyTrend(enabled: boolean): { trend: WeeklyTrend | null; loading: boolean } {
   const [trend, setTrend] = useState<WeeklyTrend | null>(null);
 
   useEffect(() => {
+    // Same guard as useMetrics: the event log is staff-only readable.
+    if (!enabled) return;
     let active = true;
     const now = Date.now();
     const repo = getEventRepository();
@@ -37,7 +39,7 @@ export function useWeeklyTrend(): { trend: WeeklyTrend | null; loading: boolean 
     return () => {
       active = false;
     };
-  }, []);
+  }, [enabled]);
 
   return { trend, loading: trend === null };
 }

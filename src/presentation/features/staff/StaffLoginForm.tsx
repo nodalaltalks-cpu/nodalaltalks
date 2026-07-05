@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isStaffRole } from "@core/domain/value-objects/role";
 import { useAuth } from "@/presentation/providers/auth-provider";
@@ -23,9 +23,12 @@ export function StaffLoginForm() {
   const [pending, setPending] = useState(false);
 
   // Already signed in as staff? Go straight to the right console.
-  if (user && isStaffRole(user.role)) {
-    router.replace(params.get("next") ?? (user.role === "verifier" ? "/verifier/documents" : "/founder"));
-  }
+  // (In an effect — navigating during render is a React error.)
+  useEffect(() => {
+    if (user && isStaffRole(user.role)) {
+      router.replace(params.get("next") ?? (user.role === "verifier" ? "/verifier/documents" : "/founder"));
+    }
+  }, [user, router, params]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,7 +82,9 @@ export function StaffLoginForm() {
           className="mb-4 mt-1.5 w-full rounded-[10px] border-[1.5px] border-[color:var(--border-2)] px-3 py-2.5 text-[14px] outline-none focus:border-amber"
         />
         {error && <p className="mb-3 text-[12.5px] font-semibold text-rose">{error}</p>}
-        <Button type="submit" size="block" disabled={pending || !auth} className="bg-amber text-ink hover:bg-amber-2">
+        {/* `pending` only — `!auth` differs between SSR (always null) and client,
+            causing a hydration mismatch; onSubmit already guards null auth. */}
+        <Button type="submit" size="block" disabled={pending} className="bg-amber text-ink hover:bg-amber-2">
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
