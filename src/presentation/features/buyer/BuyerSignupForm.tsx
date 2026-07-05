@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EVENT_NAMES } from "@core/domain/events";
@@ -34,6 +35,9 @@ export function BuyerSignupForm() {
   const track = useTrack();
   const register = useRegisterBuyer();
   const recaptcha = useRef<unknown>(null);
+  // Auth-at-the-intent-moment: "Talk Now" (and future gated actions) send
+  // buyers here with ?next= so they land back where their intent was.
+  const next = useSearchParams().get("next");
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -66,7 +70,18 @@ export function BuyerSignupForm() {
     setError(null);
     try {
       recaptcha.current ??= createRecaptchaVerifier("recaptcha-container");
-      const ch = await auth.sendPhoneOtp(values.phone, recaptcha.current);
+      // 25s timeout: the reCAPTCHA/SMS path can wedge without ever rejecting
+      // (seen against emulators, possible on flaky networks) — never leave the
+      // user staring at "Sending…" forever with no explanation.
+      const ch = await Promise.race([
+        auth.sendPhoneOtp(values.phone, recaptcha.current),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Couldn't reach the SMS service. Check your connection and try again.")),
+            25_000,
+          ),
+        ),
+      ]);
       track(EVENT_NAMES.BUYER_OTP_REQUESTED, { actorType: "buyer" });
       setPhone(values.phone);
       setChallenge(ch);
@@ -107,7 +122,7 @@ export function BuyerSignupForm() {
 
       {step === "phone" && (
         <>
-          <Head tag="Step 1 of 3" title="What's your mobile number?" sub="We'll send a 4–6 digit OTP. Your number is never shown to advisors." />
+          <Head tag="Sign up or log in · Step 1 of 3" title="What's your mobile number?" sub="New here or coming back — same OTP either way. Your number is never shown to advisors." />
           <Card>
             <form onSubmit={phoneForm.handleSubmit(sendOtp)} noValidate>
               <Field label="Mobile Number" required hint="Used for login and call routing only." error={phoneForm.formState.errors.phone?.message}>
@@ -212,8 +227,8 @@ export function BuyerSignupForm() {
             Your buyer account is ready. Browse verified advisors who already own
             in the projects you&apos;re evaluating.
           </p>
-          <Link href="/buyer" className="mt-7 inline-block">
-            <Button>Browse Advisors →</Button>
+          <Link href={next ?? "/buyer"} className="mt-7 inline-block">
+            <Button>{next ? "Continue where you left off →" : "Browse Advisors →"}</Button>
           </Link>
         </div>
       )}

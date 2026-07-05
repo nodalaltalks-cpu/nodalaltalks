@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import { BuyerSignupForm } from "@/presentation/features/buyer/BuyerSignupForm";
 
-export const metadata = { title: "Buyer Sign Up · NoDalalTalks" };
+export const metadata = { title: "Sign Up or Log In · NoDalalTalks" };
 
 export default function BuyerSignupPage() {
   return (
@@ -10,7 +11,7 @@ export default function BuyerSignupPage() {
         <div className="relative mx-auto max-w-xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber/30 bg-[rgba(245,158,11,.08)] px-4 py-2 text-[13px] font-semibold text-amber-2">
             <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-amber" />
-            Buyer Sign Up — Free, 60 seconds
+            Sign up or log in — Free, 60 seconds
           </div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
             Talk to Someone Who
@@ -23,7 +24,10 @@ export default function BuyerSignupPage() {
           </p>
         </div>
       </section>
-      <BuyerSignupForm />
+      {/* Suspense: the form reads useSearchParams (?next=). */}
+      <Suspense>
+        <BuyerSignupForm />
+      </Suspense>
     </main>
   );
 }

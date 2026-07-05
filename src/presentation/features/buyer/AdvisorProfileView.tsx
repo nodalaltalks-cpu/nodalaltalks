@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { EVENT_NAMES } from "@core/domain/events";
 import { formatPaise } from "@core/domain/value-objects/money";
 import { useTrack } from "@/presentation/analytics/use-track";
+import { useAuth } from "@/presentation/providers/auth-provider";
 import { useRequestCall } from "@/presentation/features/calls/hooks";
 import { useAdvisorReviews } from "@/presentation/features/reviews/hooks";
 import { Button } from "@/presentation/components/ui/button";
@@ -14,6 +15,7 @@ import { useAdvisorProfile } from "./hooks";
 export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   const { data, isLoading } = useAdvisorProfile(advisorId);
   const { data: reviews } = useAdvisorReviews(advisorId);
+  const { user } = useAuth();
   const track = useTrack();
   const router = useRouter();
   const requestCall = useRequestCall();
@@ -60,6 +62,12 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   };
 
   const talkNow = () => {
+    // Auth at the intent moment: a signed-out buyer isn't shown an error —
+    // they're taken through OTP and returned right here to finish the call.
+    if (!user) {
+      router.push(`/buyer/signup?next=/buyer/advisor/${advisorId}`);
+      return;
+    }
     requestCall.mutate(advisorId, {
       onSuccess: ({ call }) => router.push(`/buyer/call/${call.id}`),
     });
