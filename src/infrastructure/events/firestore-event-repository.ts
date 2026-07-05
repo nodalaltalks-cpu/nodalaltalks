@@ -18,6 +18,7 @@ import type {
 } from "@core/application/ports";
 import type { AnalyticsEvent } from "@core/domain/events";
 import { COLLECTIONS } from "../firebase/collections";
+import { pruneUndefinedDeep } from "../firebase/doc-helpers";
 
 /**
  * Firestore EventRepository — the "firestore"/scale backend. Appends to the
@@ -35,8 +36,13 @@ export class FirestoreEventRepository implements EventRepository {
 
   async append(event: AnalyticsEvent): Promise<void> {
     const { ts, ...rest } = event;
+    // Deep-prune: entity/props carry optional fields (reason, projectId, …)
+    // and the CLIENT SDK throws on any nested `undefined` — which silently
+    // swallowed every document_approved / advisor_activated event until the
+    // launch QA pass caught it. The Admin adapter is immune via
+    // ignoreUndefinedProperties; this is the client-side equivalent.
     await addDoc(this.col, {
-      ...rest,
+      ...pruneUndefinedDeep(rest),
       ts: serverTimestamp(),
       clientTs: ts,
     });

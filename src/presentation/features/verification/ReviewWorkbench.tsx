@@ -74,6 +74,12 @@ export function ReviewWorkbench({
         </span>
       </div>
 
+      {actions.decide.isError && (
+        <p className="mb-3 rounded-lg bg-[#FFF1F2] px-3 py-2 text-[12px] font-semibold text-rose">
+          Decision failed: {actions.decide.error?.message} — the document may not have been updated.
+        </p>
+      )}
+
       {/* documents */}
       <div className="grid gap-3 sm:grid-cols-2">
         {documents.map((doc) => {
