@@ -43,7 +43,7 @@ const property: Property = {
   updatedAt: 0,
 };
 
-function harness(opts: { walletBalancePaise?: number; commissionRate?: number; advisorOnline?: boolean } = {}) {
+function harness(opts: { walletBalancePaise?: number; commissionRate?: number; advisorOnline?: boolean; freeFirstCallMinutes?: number } = {}) {
   const events = new InMemoryEventRepository();
   const calls = new Map<string, Call>();
   const wallets = new Map<string, Wallet>([
@@ -116,6 +116,7 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number; a
         platformCommissionRate: opts.commissionRate ?? 0.2,
         walletRechargeMinPaise: 10_000,
         walletRechargeMaxPaise: 5_000_000,
+        freeFirstCallMinutes: opts.freeFirstCallMinutes ?? 0,
         updatedAt: 0,
       }),
       update: async () => {},
@@ -246,6 +247,53 @@ describe("endCall", () => {
     await expect(endCall("nonexistent", buyer, "buyer_hangup", t.endDeps)).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it("first call fully inside the free window bills nothing and moves no money", async () => {
+    const t = harness({ freeFirstCallMinutes: 5 });
+    const { call } = await requestCall(buyer, { advisorId: "adv_1" }, t.deps);
+    const laterClock: EndCallDeps = {
+      ...t.endDeps,
+      clock: { now: () => t.deps.clock.now() + 180_000 }, // 3 min < 5 free
+    };
+    const ended = await endCall(call.id, buyer, "buyer_hangup", laterClock);
+
+    expect(ended.amountChargedPaise).toBe(0);
+    expect(ended.advisorPayoutPaise).toBe(0);
+    expect(ended.status).toBe("completed");
+    expect(t.getSettled()).toBeNull(); // ledger untouched — no zero-amount txns
+    expect(t.wallets.get("b1")!.balancePaise).toBe(100_000);
+  });
+
+  it("first call beyond the free window bills only the excess minutes", async () => {
+    const t = harness({ freeFirstCallMinutes: 5 });
+    const { call } = await requestCall(buyer, { advisorId: "adv_1" }, t.deps);
+    const laterClock: EndCallDeps = {
+      ...t.endDeps,
+      clock: { now: () => t.deps.clock.now() + 450_000 }, // 7.5 min → 2.5 excess → 3 billed
+    };
+    const ended = await endCall(call.id, buyer, "buyer_hangup", laterClock);
+
+    expect(ended.amountChargedPaise).toBe(15_000); // 3 min × ₹50
+    expect(ended.advisorPayoutPaise).toBe(12_000); // 80%
+  });
+
+  it("a buyer with a prior completed call gets no free minutes", async () => {
+    const t = harness({ freeFirstCallMinutes: 5 });
+    // Prior completed call in history.
+    t.calls.set("old_call", {
+      id: "old_call", buyerId: "b1", advisorId: "adv_1", status: "completed",
+      ratePerMinPaise: 5000, requestedAt: 1, startedAt: 1, endedAt: 2,
+      durationSec: 60, amountChargedPaise: 5000, advisorPayoutPaise: 4000,
+      createdAt: 1, updatedAt: 2, schemaVersion: 1,
+    });
+    const { call } = await requestCall(buyer, { advisorId: "adv_1" }, t.deps);
+    const laterClock: EndCallDeps = {
+      ...t.endDeps,
+      clock: { now: () => t.deps.clock.now() + 90_000 }, // 90s → 2 min minimum-rounded
+    };
+    const ended = await endCall(call.id, buyer, "buyer_hangup", laterClock);
+    expect(ended.amountChargedPaise).toBe(10_000); // full price, no subsidy
   });
 
   it("uses the founder-configured commission rate, not a hardcoded one", async () => {

@@ -10,11 +10,12 @@ import { useAuth } from "@/presentation/providers/auth-provider";
 import { useRequestCall } from "@/presentation/features/calls/hooks";
 import { useAdvisorReviews } from "@/presentation/features/reviews/hooks";
 import { Button } from "@/presentation/components/ui/button";
-import { useAdvisorProfile } from "./hooks";
+import { useAdvisorProfile, usePublicSettings } from "./hooks";
 
 export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
   const { data, isLoading } = useAdvisorProfile(advisorId);
   const { data: reviews } = useAdvisorReviews(advisorId);
+  const { data: settings } = usePublicSettings();
   const { user } = useAuth();
   const track = useTrack();
   const router = useRouter();
@@ -116,6 +117,11 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
           {formatPaise(profile.ratePerMinPaise)}<span className="text-[13px] font-medium text-white/40">/min</span>
         </div>
         <p className="mt-1 text-[12.5px] text-white/45">Pay only for the minutes you talk. No broker, no spam.</p>
+        {!user && (settings?.freeFirstCallMinutes ?? 0) > 0 && (
+          <p className="mt-2 inline-block rounded-full bg-[rgba(16,185,129,.15)] px-3 py-1 text-[11.5px] font-bold text-[#34D399]">
+            🎁 New buyers: first {settings!.freeFirstCallMinutes} minutes free
+          </p>
+        )}
 
         <div className="mt-5 flex flex-col gap-2.5">
           <Button

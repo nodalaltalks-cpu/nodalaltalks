@@ -168,8 +168,11 @@ service cloud.firestore {
     match /builders/{builderId} { allow read: if true; allow write: if isAdmin(); }
     match /projects/{projectId} { allow read: if true; allow write: if isAdmin(); }
 
-    // ── settings: staff read, admin write. ──
-    match /system_settings/{docId}  { allow read: if isStaff(); allow write: if isAdmin(); }
+    // ── settings: system_settings is PUBLIC-READ — it holds no secrets
+    //    (commission % is already public via onboarding's "you keep 80%",
+    //    and buyer UI shows the free-first-minutes offer from it). Writes
+    //    stay admin-only. finance_settings remains staff-only. ──
+    match /system_settings/{docId}  { allow read: if true; allow write: if isAdmin(); }
     match /finance_settings/{docId} { allow read: if isStaff(); allow write: if isAdmin(); }
 
     // ── default deny (documents intent; grants nothing). ──

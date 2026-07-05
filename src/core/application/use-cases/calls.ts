@@ -228,18 +228,40 @@ export async function endCall(
 
   const now = deps.clock.now();
   const durationSec = Math.max(1, Math.round((now - call.startedAt) / 1000));
-  const billableMinutes = Math.max(MIN_BILLABLE_MINUTES, Math.ceil(durationSec / 60));
-  const amountChargedPaise = billableMinutes * call.ratePerMinPaise;
   const settings = await deps.settings.get();
+
+  // Subsidized first experience: the buyer's FIRST completed call gets
+  // settings.freeFirstCallMinutes free. Determined server-side from the
+  // call history (never client input). Only the excess minutes bill; the
+  // advisor's payout is a split of what was actually charged — the free
+  // window is the platform's growth cost, not the advisor's.
+  const priorCalls = await deps.calls.listRecentByBuyer(call.buyerId);
+  const isFirstCompletedCall = !priorCalls.some(
+    (c) => c.status === "completed" && c.id !== callId,
+  );
+  const freeSec = isFirstCompletedCall ? settings.freeFirstCallMinutes * 60 : 0;
+
+  const billableSec = Math.max(0, durationSec - freeSec);
+  const billableMinutes =
+    billableSec === 0
+      ? 0
+      : freeSec > 0
+        ? Math.ceil(billableSec / 60) // no minimum on a partially-free first call
+        : Math.max(MIN_BILLABLE_MINUTES, Math.ceil(billableSec / 60));
+  const amountChargedPaise = billableMinutes * call.ratePerMinPaise;
   const { advisorPayoutPaise } = splitCallCharge(amountChargedPaise, settings.platformCommissionRate);
 
-  await deps.ledger.settleCall({
-    callId,
-    buyerId: call.buyerId,
-    advisorId: call.advisorId,
-    amountChargedPaise,
-    advisorPayoutPaise,
-  });
+  // A fully-free call moves no money — skip the ledger entirely rather than
+  // writing zero-amount transactions.
+  if (amountChargedPaise > 0) {
+    await deps.ledger.settleCall({
+      callId,
+      buyerId: call.buyerId,
+      advisorId: call.advisorId,
+      amountChargedPaise,
+      advisorPayoutPaise,
+    });
+  }
 
   const patch: Partial<Call> = {
     status: "completed",
