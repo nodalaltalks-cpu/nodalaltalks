@@ -68,6 +68,8 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number } 
       void calls.set(id, { ...calls.get(id)!, ...patch }),
     listRecentByBuyer: async (buyerId: string) =>
       [...calls.values()].filter((c) => c.buyerId === buyerId),
+    listRecentByAdvisor: async (advisorId: string) =>
+      [...calls.values()].filter((c) => c.advisorId === advisorId),
   };
 
   const deps: CallDeps = {

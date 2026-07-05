@@ -33,4 +33,14 @@ export class AdminCallRepository implements CallRepository {
       .get();
     return snap.docs.map((d) => d.data() as Call);
   }
+
+  async listRecentByAdvisor(advisorId: string, max = 25): Promise<Call[]> {
+    const snap = await this.db
+      .collection(COLLECTIONS.CALLS)
+      .where("advisorId", "==", advisorId)
+      .orderBy("requestedAt", "desc")
+      .limit(max)
+      .get();
+    return snap.docs.map((d) => d.data() as Call);
+  }
 }

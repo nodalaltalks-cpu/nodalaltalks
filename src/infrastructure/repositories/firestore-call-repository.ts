@@ -53,4 +53,16 @@ export class FirestoreCallRepository implements CallRepository {
     );
     return snap.docs.map((d) => d.data() as Call);
   }
+
+  async listRecentByAdvisor(advisorId: string, max = 25): Promise<Call[]> {
+    const snap = await getDocs(
+      query(
+        collection(this.db, COLLECTIONS.CALLS),
+        where("advisorId", "==", advisorId),
+        orderBy("requestedAt", "desc"),
+        fsLimit(max),
+      ),
+    );
+    return snap.docs.map((d) => d.data() as Call);
+  }
 }

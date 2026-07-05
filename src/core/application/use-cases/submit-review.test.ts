@@ -36,6 +36,7 @@ function harness(call: Call | null = completedCall) {
       get: async (id) => (id === call?.id ? call : null),
       update: async () => {},
       listRecentByBuyer: async () => [],
+      listRecentByAdvisor: async () => [],
     },
     reviews: {
       submit: async (review) => {

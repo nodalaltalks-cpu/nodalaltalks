@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { AdvisorStatus } from "@core/domain/entities";
+import type { AdvisorStatus, Call } from "@core/domain/entities";
+import { formatPaise } from "@core/domain/value-objects/money";
 import { useAuth } from "@/presentation/providers/auth-provider";
-import { useOwnAdvisorProfile } from "./hooks";
+import { useAdvisorCalls, useAdvisorEarnings, useOwnAdvisorProfile } from "./hooks";
 
 /**
  * The advisor's home — the "advisor mode" of a buyer account (advisor is a
@@ -53,6 +54,9 @@ const STATUS_COPY: Record<AdvisorStatus, { badge: string; cls: string; title: st
 export function AdvisorDashboard() {
   const { user, loading, capabilities } = useAuth();
   const { data: profile } = useOwnAdvisorProfile();
+  const isActive = capabilities.advisorStatus === "active";
+  const { data: earnings } = useAdvisorEarnings(isActive);
+  const { data: calls } = useAdvisorCalls(isActive);
 
   if (loading || (user && !capabilities.resolved)) {
     return <Center><div className="h-40 w-full max-w-md animate-pulse rounded-2xl bg-surface-2" /></Center>;
@@ -125,6 +129,64 @@ export function AdvisorDashboard() {
           </p>
         )}
       </div>
+
+      {isActive && (
+        <>
+          {/* earnings */}
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border-[1.5px] border-border bg-white p-6 shadow-sh">
+              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">This week</div>
+              <div className="mt-2 font-display text-3xl font-extrabold tracking-tight">
+                {formatPaise(earnings?.thisWeekPaise ?? 0)}
+              </div>
+            </div>
+            <div className="rounded-2xl border-[1.5px] border-border bg-white p-6 shadow-sh">
+              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Lifetime earnings</div>
+              <div className="mt-2 font-display text-3xl font-extrabold tracking-tight">
+                {formatPaise(earnings?.lifetimePaise ?? 0)}
+              </div>
+              <div className="mt-1 text-[11px] text-soft">Payouts transfer weekly to your bank.</div>
+            </div>
+          </div>
+
+          {/* call history */}
+          <div className="mt-5 rounded-2xl border-[1.5px] border-border bg-white p-5 shadow-sh">
+            <h3 className="mb-3 text-[15px] font-extrabold">Recent calls</h3>
+            {(calls?.length ?? 0) === 0 ? (
+              <p className="py-8 text-center text-[12.5px] text-soft">
+                No calls yet — you&apos;ll see each consultation here the moment it ends.
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {calls!.map((c) => <AdvisorCallRow key={c.id} c={c} />)}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdvisorCallRow({ c }: { c: Call }) {
+  const done = c.status === "completed";
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <div className={`flex h-9 w-9 items-center justify-center rounded-[10px] text-base ${done ? "bg-[#DCFCE7]" : "bg-surface-2"}`}>
+        {done ? "📞" : "…"}
+      </div>
+      <div className="min-w-0">
+        <div className="text-[13px] font-bold capitalize">{c.status}</div>
+        <div className="text-[11px] text-soft">
+          {new Date(c.requestedAt).toLocaleString("en-IN")}
+          {c.durationSec ? ` · ${Math.round(c.durationSec / 60)} min` : ""}
+        </div>
+      </div>
+      {done && c.advisorPayoutPaise != null && (
+        <div className="ml-auto font-display text-[13.5px] font-bold text-green">
+          +{formatPaise(c.advisorPayoutPaise)}
+        </div>
+      )}
     </div>
   );
 }

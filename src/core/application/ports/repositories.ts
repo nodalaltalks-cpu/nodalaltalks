@@ -81,6 +81,8 @@ export interface CallRepository {
   get(callId: string): Promise<Call | null>;
   update(callId: string, patch: Partial<Call>): Promise<void>;
   listRecentByBuyer(buyerId: string, max?: number): Promise<Call[]>;
+  /** The advisor-side history (advisor dashboard). Needs the calls(advisorId, requestedAt DESC) index. */
+  listRecentByAdvisor(advisorId: string, max?: number): Promise<Call[]>;
 }
 
 /** Client-side, read-only reviews access (writes are server-owned — ReviewLedger). */
