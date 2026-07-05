@@ -9,6 +9,14 @@ import { useTrack } from "@/presentation/analytics/use-track";
 import { cn } from "@/lib/utils";
 import { useActiveAdvisors } from "./hooks";
 
+/** The headline asks "which project are you evaluating?" — so project and
+ *  builder must be searchable, not just the advisor's own name/city. */
+function matchesQuery(a: AdvisorProfile, term: string): boolean {
+  return [a.firstName, a.lastName, a.headline, a.city, a.primaryProject, a.primaryBuilder, a.primaryCity]
+    .filter(Boolean)
+    .some((v) => v!.toLowerCase().includes(term));
+}
+
 export function AdvisorSearch() {
   const { data, isLoading } = useActiveAdvisors();
   const track = useTrack();
@@ -19,11 +27,7 @@ export function AdvisorSearch() {
     const list = data ?? [];
     if (!applied.trim()) return list;
     const term = applied.toLowerCase();
-    return list.filter((a) =>
-      [a.firstName, a.lastName, a.headline, a.city]
-        .filter(Boolean)
-        .some((v) => v!.toLowerCase().includes(term)),
-    );
+    return list.filter((a) => matchesQuery(a, term));
   }, [data, applied]);
 
   function onSearch(e: React.FormEvent) {
@@ -31,11 +35,7 @@ export function AdvisorSearch() {
     setApplied(q);
     track(EVENT_NAMES.SEARCH_PERFORMED, { actorType: "buyer" }, { query: q });
     const term = q.toLowerCase();
-    const hits = (data ?? []).filter((a) =>
-      [a.firstName, a.lastName, a.headline, a.city]
-        .filter(Boolean)
-        .some((v) => v!.toLowerCase().includes(term)),
-    );
+    const hits = (data ?? []).filter((a) => matchesQuery(a, term));
     if (q.trim() && hits.length === 0) {
       track(EVENT_NAMES.SEARCH_ZERO_RESULT, { actorType: "buyer" }, { query: q });
     }
@@ -106,7 +106,9 @@ function AdvisorCard({ a }: { a: AdvisorProfile }) {
         </div>
         <div className="min-w-0">
           <div className="font-display text-[14.5px] font-bold">{a.firstName} {a.lastName}</div>
-          <div className="truncate text-[11.5px] text-muted-foreground">{a.city}</div>
+          <div className="truncate text-[11.5px] text-muted-foreground">
+            {a.primaryProject ? `${a.primaryProject} · ${a.primaryCity ?? a.city}` : a.city}
+          </div>
         </div>
       </div>
       <div className="mb-3 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
