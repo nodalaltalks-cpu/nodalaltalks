@@ -52,6 +52,7 @@ export function buildVerificationDeps(): VerificationDeps {
     advisors: new FirestoreAdvisorProfileRepository(db),
     documents: new FirestoreDocumentRepository(db),
     properties: new FirestorePropertyRepository(db),
+    notifications: new FirestoreNotificationRepository(db),
     events: getEventRepository(),
     clock: systemClock,
     ids: idGenerator,

@@ -9,6 +9,7 @@ import type {
   DocumentRepository,
   EventRepository,
   IdGenerator,
+  NotificationRepository,
   PropertyRepository,
   RuntimeContext,
   SessionProvider,
@@ -32,11 +33,33 @@ export interface VerificationDeps {
   advisors: AdvisorProfileRepository;
   documents: DocumentRepository;
   properties: PropertyRepository;
+  notifications: NotificationRepository;
   events: EventRepository;
   clock: Clock;
   ids: IdGenerator;
   session: SessionProvider;
   runtime: RuntimeContext;
+}
+
+/** In-app notification to the advisor about a verification decision. Only
+ *  actionable/final decisions notify — per-document approvals stay quiet
+ *  until the application-level outcome. */
+function notifyAdvisor(
+  deps: VerificationDeps,
+  advisorId: string,
+  type: string,
+  title: string,
+  body: string,
+) {
+  return deps.notifications.create({
+    id: deps.ids.next("notif"),
+    userId: advisorId,
+    type,
+    title,
+    body,
+    read: false,
+    createdAt: deps.clock.now(),
+  });
 }
 
 function emitter(verifier: AuthUser, advisorId: string, deps: VerificationDeps) {
@@ -92,6 +115,20 @@ export async function decideDocument(
     docType: doc.docType,
     reason,
   });
+
+  if (outcome === "needs_reupload") {
+    await notifyAdvisor(
+      deps, doc.advisorId, "document_reupload",
+      "Action needed: re-upload a document",
+      `${doc.name}: ${reason ?? "please upload a clearer copy."}`,
+    );
+  } else if (outcome === "rejected") {
+    await notifyAdvisor(
+      deps, doc.advisorId, "document_rejected",
+      "A document was rejected",
+      `${doc.name}${reason ? `: ${reason}` : ""}`,
+    );
+  }
 }
 
 /** Required-document checklist for activation (the proptech "owner verified" bar). */
@@ -150,6 +187,12 @@ export async function activateAdvisor(
     { verifierId: verifier.uid },
     { projectId: primaryProperty?.project },
   );
+
+  await notifyAdvisor(
+    deps, advisorId, "advisor_activated",
+    "You're live! 🎉",
+    "Your ownership is verified. Go online from your advisor dashboard to start taking calls.",
+  );
 }
 
 /** Reject the whole application with a reason. */
@@ -166,4 +209,10 @@ export async function rejectAdvisor(
   await emitter(verifier, advisorId, deps)(EVENT_NAMES.ADVISOR_REJECTED, {
     reason,
   });
+
+  await notifyAdvisor(
+    deps, advisorId, "advisor_rejected",
+    "Your application was not approved",
+    reason,
+  );
 }

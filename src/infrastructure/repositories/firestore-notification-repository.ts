@@ -6,20 +6,27 @@ import {
   limit as fsLimit,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
 import type { NotificationRepository } from "@core/application/ports";
 import type { Notification } from "@core/domain/entities";
 import { COLLECTIONS } from "../firebase/collections";
+import { pruneUndefinedDeep } from "../firebase/doc-helpers";
 
-/** Client-side notifications/{id} — the recipient's inbox. Security Rules deny
- *  client create; `markRead` is the only client write, and only for `read`. */
+/** Client-side notifications/{id} — the recipient's inbox, plus STAFF-only
+ *  creation (Security Rules allow create for staff; verification decisions
+ *  notify the advisor straight from the verifier's session). Non-staff
+ *  creates are rejected by rules, not by this adapter. */
 export class FirestoreNotificationRepository implements NotificationRepository {
   constructor(private readonly db: Firestore) {}
 
-  async create(): Promise<void> {
-    throw new Error("Notifications are created server-side only.");
+  async create(notification: Notification): Promise<void> {
+    await setDoc(
+      doc(this.db, COLLECTIONS.NOTIFICATIONS, notification.id),
+      pruneUndefinedDeep({ ...notification }),
+    );
   }
 
   async listByUser(userId: string, max = 25): Promise<Notification[]> {

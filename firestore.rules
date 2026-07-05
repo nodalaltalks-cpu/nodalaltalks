@@ -158,7 +158,10 @@ service cloud.firestore {
       allow update: if isSignedIn()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      allow create, delete: if false; // Admin SDK only
+      // Staff create: verification decisions notify the advisor from the
+      // verifier's (client-side) session. Everything else stays Admin-only.
+      allow create: if isStaff();
+      allow delete: if false; // Admin SDK only
     }
 
     // ── reference data: public read, admin write. ──

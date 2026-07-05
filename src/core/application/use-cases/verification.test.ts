@@ -9,6 +9,7 @@ import type { VerificationDeps } from "./verification";
 import { InMemoryEventRepository } from "@infra/events/in-memory-event-repository";
 import type {
   AdvisorProfile,
+  Notification,
   Property,
   VerificationDocument,
 } from "../../domain/entities";
@@ -74,8 +75,14 @@ function setup(docs: VerificationDocument[]) {
   ];
   const docStore = new Map(docs.map((d) => [d.id, d] as const));
   const events = new InMemoryEventRepository();
+  const notifications: Notification[] = [];
 
   const deps: VerificationDeps = {
+    notifications: {
+      create: async (n) => void notifications.push(n),
+      listByUser: async (userId) => notifications.filter((n) => n.userId === userId),
+      markRead: async () => {},
+    },
     advisors: {
       create: async () => {},
       get: async (id) => profiles.get(id) ?? null,
@@ -102,7 +109,7 @@ function setup(docs: VerificationDocument[]) {
     session: { sessionId: () => "s" },
     runtime: { source: () => "test", platform: () => "web", environment: () => "development" },
   };
-  return { deps, profiles, docStore, events };
+  return { deps, profiles, docStore, events, notifications };
 }
 
 describe("activationBlockers", () => {
@@ -147,6 +154,8 @@ describe("activateAdvisor", () => {
     await activateAdvisor("adv_1", verifier, t.deps);
     expect(t.profiles.get("adv_1")?.status).toBe("active");
     expect(t.profiles.get("adv_1")?.ownershipVerified).toBe(true);
+    // The advisor gets an in-app "you're live" notification.
+    expect(t.notifications.some((n) => n.userId === "adv_1" && n.type === "advisor_activated")).toBe(true);
     const log = await t.events.query();
     expect(log.map((e) => e.name)).toContain("advisor_activated");
     // liquidityByProject's supply side reads this off advisor_activated.
@@ -164,5 +173,6 @@ describe("rejectAdvisor", () => {
     expect(t.profiles.get("adv_1")?.rejectionReason).toBe(
       "Documents do not match claim",
     );
+    expect(t.notifications.some((n) => n.userId === "adv_1" && n.type === "advisor_rejected")).toBe(true);
   });
 });
