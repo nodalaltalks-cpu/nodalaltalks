@@ -12,7 +12,7 @@ import type {
   Property,
   VerificationDocument,
 } from "../../domain/entities";
-import type { AuthUser, RoleClaimService } from "../ports";
+import type { AuthUser } from "../ports";
 
 const verifier: AuthUser = { uid: "ver_1", role: "verifier" };
 
@@ -74,12 +74,8 @@ function setup(docs: VerificationDocument[]) {
   ];
   const docStore = new Map(docs.map((d) => [d.id, d] as const));
   const events = new InMemoryEventRepository();
-  const roles: { granted: Array<[string, string]> } & RoleClaimService = {
-    granted: [],
-    setRole: async (uid, role) => void roles.granted.push([uid, role]),
-  };
 
-  const deps: VerificationDeps & { roleClaims: RoleClaimService } = {
+  const deps: VerificationDeps = {
     advisors: {
       create: async () => {},
       get: async (id) => profiles.get(id) ?? null,
@@ -105,9 +101,8 @@ function setup(docs: VerificationDocument[]) {
     ids: { next: (p = "e") => `${p}_x` },
     session: { sessionId: () => "s" },
     runtime: { source: () => "test", platform: () => "web", environment: () => "development" },
-    roleClaims: roles,
   };
-  return { deps, profiles, docStore, events, roles };
+  return { deps, profiles, docStore, events };
 }
 
 describe("activationBlockers", () => {
@@ -141,10 +136,10 @@ describe("activateAdvisor", () => {
     await expect(activateAdvisor("adv_1", verifier, t.deps)).rejects.toThrow(
       /Cannot activate/,
     );
-    expect(t.roles.granted).toHaveLength(0);
+    expect(t.profiles.get("adv_1")?.status).toBe("under_review");
   });
 
-  it("activates, verifies ownership and grants the advisor role server-side", async () => {
+  it("activates and verifies ownership — active status IS the advisor capability", async () => {
     const t = setup([
       doc("d1", "Ownership Proof", "approved"),
       doc("d2", "Identity", "approved"),
@@ -152,7 +147,6 @@ describe("activateAdvisor", () => {
     await activateAdvisor("adv_1", verifier, t.deps);
     expect(t.profiles.get("adv_1")?.status).toBe("active");
     expect(t.profiles.get("adv_1")?.ownershipVerified).toBe(true);
-    expect(t.roles.granted).toEqual([["adv_1", "advisor"]]);
     const log = await t.events.query();
     expect(log.map((e) => e.name)).toContain("advisor_activated");
     // liquidityByProject's supply side reads this off advisor_activated.

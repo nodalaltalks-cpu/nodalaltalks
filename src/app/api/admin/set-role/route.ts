@@ -8,7 +8,9 @@ import { isRole, isStaffRole, type Role } from "@core/domain/value-objects/role"
  * Security:
  *  1. Requires a valid Firebase ID token (Authorization: Bearer …).
  *  2. The caller's own claim must be staff (verifier/founder/admin).
- *  3. Only verifiers+ may grant 'advisor'; granting staff roles requires admin.
+ *  3. Only STAFF roles can be granted, and only by founder/admin. The
+ *     `advisor` capability is NOT a claim — it is conferred by activating the
+ *     advisor profile (see verification.ts) — so this route no longer grants it.
  *
  * Runs on the Node runtime because the Admin SDK is not edge-compatible.
  */
@@ -42,10 +44,13 @@ export async function POST(req: Request) {
     uid?: string;
     role?: string;
   } | null;
-  if (!body?.uid || !isRole(body.role)) {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  if (!body?.uid || !isRole(body.role) || !isStaffRole(body.role)) {
+    return NextResponse.json(
+      { error: "Only staff roles (verifier/founder/admin) can be granted here." },
+      { status: 400 },
+    );
   }
-  if (isStaffRole(body.role) && callerRole !== "founder" && callerRole !== "admin") {
+  if (callerRole !== "founder" && callerRole !== "admin") {
     return NextResponse.json(
       { error: "Only admins may grant staff roles" },
       { status: 403 },

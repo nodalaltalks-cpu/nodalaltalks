@@ -10,7 +10,6 @@ import type {
   EventRepository,
   IdGenerator,
   PropertyRepository,
-  RoleClaimService,
   RuntimeContext,
   SessionProvider,
 } from "../ports";
@@ -22,8 +21,10 @@ import type {
  *
  * Proptech discipline baked in:
  *  • activation is gated by a required-document checklist (KYC-style);
- *  • the `advisor` role is granted only via the server-side RoleClaimService —
- *    a verifier can never elevate access purely client-side;
+ *  • advisor is a CAPABILITY, not a role claim: activation flips the profile
+ *    to `active`, and everything downstream (rules, UI, call routing) keys off
+ *    that server-verified status — no privilege claim is granted, so there is
+ *    nothing for a compromised verifier session to escalate;
  *  • nothing is deleted: rejections and re-uploads are new events over history.
  */
 
@@ -114,13 +115,14 @@ export function activationBlockers(docs: VerificationDocument[]): string[] {
 }
 
 /**
- * Approve & activate. Verifies the checklist, flips status/ownership, GRANTS the
- * advisor role via the server-side RoleClaimService, and records the activation.
+ * Approve & activate. Verifies the checklist, flips status/ownership, and
+ * records the activation. The `active` profile status IS the advisor
+ * capability — no role claim is involved (see the module header).
  */
 export async function activateAdvisor(
   advisorId: string,
   verifier: AuthUser,
-  deps: VerificationDeps & { roleClaims: RoleClaimService },
+  deps: VerificationDeps,
 ): Promise<void> {
   const docs = await deps.documents.listByAdvisor(advisorId);
   const blockers = activationBlockers(docs);
@@ -134,9 +136,6 @@ export async function activateAdvisor(
     verifierId: verifier.uid,
     activatedAt: deps.clock.now(),
   });
-
-  // Privileged: grant the advisor role server-side.
-  await deps.roleClaims.setRole(advisorId, "advisor");
 
   // Stamp the project on activation — this is the supply side of
   // liquidityByProject (Marketplace Health's "who needs advisor recruitment"
