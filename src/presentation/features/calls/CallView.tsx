@@ -77,7 +77,12 @@ export function CallView({ callId }: { callId: string }) {
       </h1>
       <p className="mt-1 text-[13px] text-muted-foreground">{formatPaise(call.ratePerMinPaise)}/min</p>
 
-      <div className="mt-8 font-display text-5xl font-extrabold tabular-nums tracking-tight">
+      <div className="mt-4 flex gap-2 rounded-[10px] border border-amber/40 bg-amber-pale px-3 py-2 text-[11px] font-semibold leading-snug text-[#92400E]">
+        <span>🧪</span>
+        <span>Beta: this is a simulated call — no audio is carried yet. Billing and receipts are real (test credits).</span>
+      </div>
+
+      <div className="mt-6 font-display text-5xl font-extrabold tabular-nums tracking-tight">
         {mins}:{secs}
       </div>
       <p className="mt-2 text-[12.5px] text-muted-foreground">

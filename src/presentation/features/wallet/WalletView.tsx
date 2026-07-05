@@ -48,6 +48,13 @@ export function WalletView() {
         </div>
 
         <div className="mt-5 rounded-2xl border-[1.5px] border-border bg-white p-5 shadow-sh">
+          <div className="mb-3 flex gap-2 rounded-[10px] border border-amber/40 bg-amber-pale p-3 text-[11.5px] font-semibold leading-snug text-[#92400E]">
+            <span>🧪</span>
+            <span>
+              Beta test mode: no real money is charged. Wallet credits here are
+              free test credits while we finish payment-provider onboarding.
+            </span>
+          </div>
           <div className="mb-3 text-[13px] font-bold">Add money</div>
           <div className="grid grid-cols-4 gap-2">
             {PRESETS_RUPEES.map((p) => (
@@ -88,10 +95,6 @@ export function WalletView() {
           >
             {recharge.isPending ? "Processing…" : `Add ${formatPaise(amountPaise)}`}
           </button>
-          <div className="mt-3 flex gap-2 rounded-[10px] border border-green/20 bg-[rgba(16,185,129,.07)] p-3 text-[11.5px] leading-snug text-[#065F46]">
-            <span>💳</span>
-            <span>Placeholder payments (auto-captured). Swap in Razorpay/Stripe later with no code change to billing.</span>
-          </div>
         </div>
       </div>
 

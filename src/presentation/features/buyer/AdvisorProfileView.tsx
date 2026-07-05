@@ -129,6 +129,9 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
             {requestCall.error.message}
           </p>
         )}
+        <p className="mt-3 text-center text-[10.5px] text-white/40">
+          🧪 Beta: calls are simulated (no audio yet) and use free test credits.
+        </p>
       </div>
 
       {reviews && reviews.length > 0 && (
