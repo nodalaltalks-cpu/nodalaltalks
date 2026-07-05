@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { AdvisorStatus, Call } from "@core/domain/entities";
 import { formatPaise } from "@core/domain/value-objects/money";
 import { useAuth } from "@/presentation/providers/auth-provider";
-import { useAdvisorCalls, useAdvisorEarnings, useOwnAdvisorProfile } from "./hooks";
+import { useAdvisorCalls, useAdvisorEarnings, useOwnAdvisorProfile, useSetAvailability } from "./hooks";
 
 /**
  * The advisor's home — the "advisor mode" of a buyer account (advisor is a
@@ -57,6 +57,7 @@ export function AdvisorDashboard() {
   const isActive = capabilities.advisorStatus === "active";
   const { data: earnings } = useAdvisorEarnings(isActive);
   const { data: calls } = useAdvisorCalls(isActive);
+  const setAvailability = useSetAvailability();
 
   if (loading || (user && !capabilities.resolved)) {
     return <Center><div className="h-40 w-full max-w-md animate-pulse rounded-2xl bg-surface-2" /></Center>;
@@ -132,6 +133,34 @@ export function AdvisorDashboard() {
 
       {isActive && (
         <>
+          {/* availability — the single most important control on this page */}
+          <div className="mt-5 flex items-center justify-between rounded-2xl border-[1.5px] border-border bg-white p-6 shadow-sh">
+            <div>
+              <div className="text-[15px] font-extrabold">
+                {profile?.isAvailable ? "🟢 You're online" : "⚫ You're offline"}
+              </div>
+              <p className="mt-0.5 text-[12px] text-muted-foreground">
+                {profile?.isAvailable
+                  ? "Buyers can call you right now."
+                  : "Buyers can see your profile but can't start a call until you go online."}
+              </p>
+              {setAvailability.isError && (
+                <p className="mt-1 text-[11.5px] font-semibold text-rose">{setAvailability.error.message}</p>
+              )}
+            </div>
+            <button
+              onClick={() => setAvailability.mutate(!(profile?.isAvailable ?? false))}
+              disabled={setAvailability.isPending || !profile}
+              className={`rounded-[11px] px-6 py-3 font-display text-[13.5px] font-extrabold transition-colors disabled:opacity-50 ${
+                profile?.isAvailable
+                  ? "border-[1.5px] border-[color:var(--border-2)] text-ink-2 hover:border-ink"
+                  : "bg-green text-white hover:opacity-90"
+              }`}
+            >
+              {setAvailability.isPending ? "…" : profile?.isAvailable ? "Go offline" : "Go online"}
+            </button>
+          </div>
+
           {/* earnings */}
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border-[1.5px] border-border bg-white p-6 shadow-sh">

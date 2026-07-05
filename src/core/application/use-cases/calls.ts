@@ -74,6 +74,12 @@ export async function requestCall(
   if (!advisor || advisor.status !== "active") {
     throw new Error("This advisor isn't available for calls right now.");
   }
+  // Availability is opt-in (absent = offline): the advisor must have flipped
+  // their online switch. Without live presence infra this is the honest
+  // supply signal — see M8 in the roadmap.
+  if (advisor.isAvailable !== true) {
+    throw new Error("This advisor is offline right now — try again later or shortlist them.");
+  }
 
   const wallet = await deps.wallet.get(buyer.uid);
   const balancePaise = wallet?.balancePaise ?? 0;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { buildCallReader, buildReviewReaders, buildWalletReader } from "@infra/composition";
 import { useAuth } from "@/presentation/providers/auth-provider";
 
@@ -11,6 +11,25 @@ export function useOwnAdvisorProfile() {
     queryKey: ["advisor", "self", user?.uid ?? "none"],
     enabled: !!user,
     queryFn: () => buildReviewReaders().advisors.get(user!.uid),
+  });
+}
+
+/** Flip the online/offline switch. Rules only allow this while status is active. */
+export function useSetAvailability() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (isAvailable: boolean) => {
+      if (!user) throw new Error("Sign in first.");
+      return buildReviewReaders().advisors.update(user.uid, {
+        isAvailable,
+        lastOnlineAt: Date.now(),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["advisor", "self", user?.uid ?? "none"] });
+      qc.invalidateQueries({ queryKey: ["advisors", "active"] });
+    },
   });
 }
 

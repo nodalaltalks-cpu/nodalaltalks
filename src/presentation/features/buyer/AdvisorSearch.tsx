@@ -24,7 +24,11 @@ export function AdvisorSearch() {
   const [applied, setApplied] = useState("");
 
   const results = useMemo(() => {
-    const list = data ?? [];
+    const list = [...(data ?? [])].sort(
+      // Online advisors first (AstroTalk pattern) — rating order is preserved
+      // within each group because the underlying query sorts by rating.
+      (a, b) => Number(b.isAvailable === true) - Number(a.isAvailable === true),
+    );
     if (!applied.trim()) return list;
     const term = applied.toLowerCase();
     return list.filter((a) => matchesQuery(a, term));
@@ -115,6 +119,12 @@ function AdvisorCard({ a }: { a: AdvisorProfile }) {
         <span className="text-amber">★</span>
         <span className="font-semibold text-ink">{a.ratingAvg ? a.ratingAvg.toFixed(1) : "New"}</span>
         {a.ratingCount > 0 && <span>· {a.ratingCount} reviews</span>}
+        <span className={cn(
+          "ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold",
+          a.isAvailable ? "bg-[#DCFCE7] text-[#065F46]" : "bg-surface-2 text-soft",
+        )}>
+          {a.isAvailable ? "🟢 Online" : "Offline"}
+        </span>
       </div>
       <p className="mb-4 line-clamp-2 text-[12.5px] leading-snug text-ink-2">
         {a.headline ?? a.bio ?? "Verified property owner."}

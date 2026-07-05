@@ -47,6 +47,13 @@ export interface AdvisorProfile {
   ratingAvg: number;
   ratingCount: number;
 
+  // Availability — the advisor's own online/offline switch (AstroTalk's core
+  // supply mechanic). Absent means offline: an advisor must consciously go
+  // online before calls can reach them. Self-writable ONLY while status is
+  // "active" (enforced in Security Rules).
+  isAvailable?: boolean;
+  lastOnlineAt?: number;
+
   /** Primary property shown on the card; full list lives in properties/. */
   primaryPropertyId?: string;
 

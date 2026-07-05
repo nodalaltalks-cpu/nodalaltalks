@@ -111,11 +111,15 @@ export function AdvisorProfileView({ advisorId }: { advisorId: string }) {
 
         <div className="mt-5 flex flex-col gap-2.5">
           <Button
-            className="w-full bg-amber text-ink hover:bg-amber-2"
-            disabled={requestCall.isPending}
+            className="w-full bg-amber text-ink hover:bg-amber-2 disabled:opacity-60"
+            disabled={requestCall.isPending || profile.isAvailable !== true}
             onClick={talkNow}
           >
-            {requestCall.isPending ? "Connecting…" : "📞 Talk Now"}
+            {requestCall.isPending
+              ? "Connecting…"
+              : profile.isAvailable === true
+                ? "📞 Talk Now — Online"
+                : "⚫ Offline right now"}
           </Button>
           <button
             onClick={shortlist}

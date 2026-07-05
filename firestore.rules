@@ -53,7 +53,13 @@ service cloud.firestore {
                     // advisor may submit for review: draft -> submitted
                     || (isSelf(advisorId)
                         && resource.data.status == 'draft'
-                        && request.resource.data.status == 'submitted');
+                        && request.resource.data.status == 'submitted')
+                    // ACTIVE advisor may flip ONLY their availability switch —
+                    // a rejected/suspended advisor can never toggle online.
+                    || (isSelf(advisorId)
+                        && resource.data.status == 'active'
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['isAvailable', 'lastOnlineAt', 'updatedAt']));
       allow delete: if isAdmin();
     }
 

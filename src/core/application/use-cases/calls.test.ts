@@ -22,6 +22,7 @@ const advisor: AdvisorProfile = {
   ratingAvg: 0,
   ratingCount: 0,
   primaryPropertyId: "prop_1",
+  isAvailable: true,
   createdAt: 0,
   updatedAt: 0,
 };
@@ -42,7 +43,7 @@ const property: Property = {
   updatedAt: 0,
 };
 
-function harness(opts: { walletBalancePaise?: number; commissionRate?: number } = {}) {
+function harness(opts: { walletBalancePaise?: number; commissionRate?: number; advisorOnline?: boolean } = {}) {
   const events = new InMemoryEventRepository();
   const calls = new Map<string, Call>();
   const wallets = new Map<string, Wallet>([
@@ -75,7 +76,8 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number } 
   const deps: CallDeps = {
     advisors: {
       create: async () => {},
-      get: async (id) => (id === "adv_1" ? advisor : null),
+      get: async (id) =>
+        id === "adv_1" ? { ...advisor, isAvailable: opts.advisorOnline ?? true } : null,
       update: async () => {},
       listByStatus: async () => [advisor],
       listActive: async () => [advisor],
@@ -168,6 +170,15 @@ describe("requestCall", () => {
     await expect(
       requestCall(buyer, { advisorId: "not_active" }, t.deps),
     ).rejects.toThrow(/isn't available/);
+  });
+
+  it("refuses an advisor who hasn't gone online (availability is opt-in)", async () => {
+    const t = harness({ advisorOnline: false });
+    await expect(
+      requestCall(buyer, { advisorId: "adv_1" }, t.deps),
+    ).rejects.toThrow(/offline right now/);
+    // No call doc, no call_requested event — the refusal is pre-flight.
+    expect((await t.events.query()).map((e) => e.name)).toEqual([]);
   });
 
   it("blocks the call and emits low_balance_hit when the wallet can't cover a minute", async () => {
