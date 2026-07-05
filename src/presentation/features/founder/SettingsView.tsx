@@ -35,6 +35,12 @@ export function SettingsView() {
     return (
       <Center>
         <h1 className="text-xl font-extrabold">Founder access only</h1>
+        <a
+          href="/staff/login?next=/founder/settings"
+          className="mt-4 inline-block rounded-[11px] bg-amber px-6 py-3 font-display text-[13.5px] font-extrabold text-ink"
+        >
+          Staff sign in →
+        </a>
       </Center>
     );
   }

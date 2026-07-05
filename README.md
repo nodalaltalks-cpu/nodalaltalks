@@ -176,6 +176,12 @@ src/
   attempt. New `/buyer/notifications` inbox. Deliberately scoped to one
   trigger (call completion) to prove the full loop end-to-end rather than
   touching every use case in one pass.
+- **M2 — Staff login (live) ✅**: `/staff/login`, email+password via the
+  existing `AuthService.signInWithEmail` (implemented since Feature 2, never
+  had a UI). Role-routes verifiers to the queue and founders to the cockpit;
+  non-staff accounts are signed out with an explanatory error. All three
+  staff access-denied gates now link here. Unblocks the entire
+  advisor-activation pipeline through the product itself.
 - Phase 4 — NoDalalTalks Intelligence (AI-powered: demand/supply prediction,
   recommendations, conversation intelligence) _(next, when explicitly scoped —
   asked mid-session whether to scope it now or stay in prep mode; answer was

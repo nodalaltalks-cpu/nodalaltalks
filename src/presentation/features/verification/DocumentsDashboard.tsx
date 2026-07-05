@@ -30,6 +30,12 @@ export function DocumentsDashboard() {
           This dashboard is restricted to the verification team. Sign in with a
           verifier account to continue.
         </p>
+        <a
+          href="/staff/login?next=/verifier/documents"
+          className="mt-4 inline-block rounded-[11px] bg-amber px-6 py-3 font-display text-[13.5px] font-extrabold text-ink"
+        >
+          Staff sign in →
+        </a>
       </div>
     );
   }

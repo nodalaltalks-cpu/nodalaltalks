@@ -39,6 +39,12 @@ export function FounderDashboard() {
         <p className="mt-2 text-sm text-muted-foreground">
           This cockpit is restricted to founders and admins.
         </p>
+        <a
+          href="/staff/login?next=/founder"
+          className="mt-4 inline-block rounded-[11px] bg-amber px-6 py-3 font-display text-[13.5px] font-extrabold text-ink"
+        >
+          Staff sign in →
+        </a>
       </Center>
     );
   }
