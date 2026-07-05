@@ -479,6 +479,12 @@ function SuccessPanel() {
           </div>
         ))}
       </div>
+      <a
+        href="/advisor/dashboard"
+        className="mt-8 inline-block rounded-[11px] bg-amber px-7 py-3.5 font-display text-sm font-extrabold text-ink"
+      >
+        Track your application →
+      </a>
     </div>
   );
 }
