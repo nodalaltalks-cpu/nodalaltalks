@@ -95,8 +95,86 @@ export function FounderDashboard() {
           ))}
         </div>
       ) : (
-        <Sections tab={tab} m={metrics} trend={trend} />
+        <>
+          <ActionInbox m={metrics} />
+          <Sections tab={tab} m={metrics} trend={trend} />
+        </>
       )}
+    </div>
+  );
+}
+
+/**
+ * The founder's action inbox — a queue that empties, not a dashboard to
+ * admire. Every item is derived from the same project() metrics as the tabs
+ * (nothing stored, nothing polled separately) and links to where the action
+ * happens. Renders a quiet all-clear when nothing needs attention.
+ */
+function ActionInbox({ m }: { m: Metrics }) {
+  const items: { icon: string; text: string; href: string }[] = [];
+
+  if (m.pendingVerification > 0) {
+    items.push({
+      icon: "🪪",
+      text: `${m.pendingVerification} advisor${m.pendingVerification === 1 ? "" : "s"} waiting for verification — every waiting day is lost supply.`,
+      href: "/verifier/documents",
+    });
+  }
+  if (m.bottlenecks.slaBreaches > 0) {
+    items.push({
+      icon: "⏰",
+      text: `${m.bottlenecks.slaBreaches} verification${m.bottlenecks.slaBreaches === 1 ? "" : "s"} past the 48h SLA.`,
+      href: "/verifier/documents",
+    });
+  }
+  if (m.revenueLeakage.failedPaymentValue > 0) {
+    items.push({
+      icon: "💳",
+      text: `${inr(m.revenueLeakage.failedPaymentValue)} in failed payments — buyers tried to pay and couldn't.`,
+      href: "/founder", // Revenue tab holds the breakdown
+    });
+  }
+  if (m.lowBalanceHits > 0) {
+    items.push({
+      icon: "🪫",
+      text: `${m.lowBalanceHits} call${m.lowBalanceHits === 1 ? "" : "s"} blocked by empty wallets — demand you didn't monetize.`,
+      href: "/founder",
+    });
+  }
+  if (m.avgRating > 0 && m.avgRating < 3.5) {
+    items.push({
+      icon: "⭐",
+      text: `Average rating is ${m.avgRating} — call quality needs attention before growth does.`,
+      href: "/founder",
+    });
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="mb-5 rounded-2xl border-[1.5px] border-green/25 bg-[rgba(16,185,129,.05)] px-5 py-3.5 text-[12.5px] font-semibold text-[#065F46]">
+        ✓ Inbox zero — nothing needs you right now.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5 rounded-2xl border-[1.5px] border-amber/40 bg-amber-pale/50 p-4">
+      <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#92400E]">
+        Needs you · {items.length}
+      </div>
+      <div className="space-y-1.5">
+        {items.map((it) => (
+          <a
+            key={it.text}
+            href={it.href}
+            className="flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-2.5 text-[12.5px] font-semibold text-ink-2 shadow-sh transition-all hover:-translate-y-px hover:text-ink"
+          >
+            <span>{it.icon}</span>
+            <span>{it.text}</span>
+            <span className="ml-auto text-muted-foreground">→</span>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
