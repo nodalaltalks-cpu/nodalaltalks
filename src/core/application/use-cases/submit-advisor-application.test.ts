@@ -59,6 +59,18 @@ function makeDeps() {
       delete: async () => {},
     },
     hash: { sha256: async () => "fake_hash" },
+    settings: {
+      get: async () => ({
+        platformCommissionRate: 0.2,
+        walletRechargeMinPaise: 10_000,
+        walletRechargeMaxPaise: 5_000_000,
+        freeFirstCallMinutes: 5,
+        advisorRateMinPaise: 3_000,
+        advisorRateMaxPaise: 12_000,
+        updatedAt: 0,
+      }),
+      update: async () => {},
+    },
     events,
   };
   return { deps, advisorsStore, propsStore, docsStore, payoutStore, uploaded, events };
@@ -147,6 +159,16 @@ describe("submitAdvisorApplication", () => {
     expect(t.docsStore.every((d) => d.aiProcessingStatus === "pending")).toBe(true);
     expect(t.uploaded).toHaveLength(2);
     expect(t.payoutStore.get("adv_1")?.bankName).toBe("HDFC Bank");
+  });
+
+  it("rejects a rate outside the settings-driven bounds (server-side, not just UI)", async () => {
+    const t = makeDeps();
+    await expect(
+      submitAdvisorApplication(actor, { ...input, rate: { ratePerMinPaise: 1_000_000 } }, t.deps),
+    ).rejects.toThrow(/between ₹30 and ₹120/);
+    // Nothing was written — validation runs before any persistence or event.
+    expect(t.advisorsStore.size).toBe(0);
+    expect(await t.events.query()).toEqual([]);
   });
 
   it("emits the onboarding events the dashboards derive from", async () => {

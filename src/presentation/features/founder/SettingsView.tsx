@@ -23,6 +23,8 @@ export function SettingsView() {
   const [minRupees, setMinRupees] = useState(100);
   const [maxRupees, setMaxRupees] = useState(50000);
   const [freeMinutes, setFreeMinutes] = useState(5);
+  const [rateMin, setRateMin] = useState(30);
+  const [rateMax, setRateMax] = useState(120);
 
   useEffect(() => {
     if (!settings) return;
@@ -30,6 +32,8 @@ export function SettingsView() {
     setMinRupees(paiseToRupees(settings.walletRechargeMinPaise));
     setMaxRupees(paiseToRupees(settings.walletRechargeMaxPaise));
     setFreeMinutes(settings.freeFirstCallMinutes);
+    setRateMin(paiseToRupees(settings.advisorRateMinPaise));
+    setRateMax(paiseToRupees(settings.advisorRateMaxPaise));
   }, [settings]);
 
   if (authLoading) return <Center>Loading…</Center>;
@@ -49,7 +53,8 @@ export function SettingsView() {
 
   const valid =
     commissionPct >= 0 && commissionPct <= 100 && minRupees > 0 && maxRupees > minRupees &&
-    Number.isInteger(freeMinutes) && freeMinutes >= 0 && freeMinutes <= 30;
+    Number.isInteger(freeMinutes) && freeMinutes >= 0 && freeMinutes <= 30 &&
+    rateMin > 0 && rateMax > rateMin;
 
   return (
     <div className="mx-auto max-w-xl px-[4%] py-10">
@@ -87,6 +92,18 @@ export function SettingsView() {
             <RupeeInput value={maxRupees} onChange={setMaxRupees} />
           </Field>
 
+          <Field label="Advisor rate bounds" hint="Per-minute rates advisors may set. Enforced server-side at application time.">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-soft">₹</span>
+              <input type="number" min={1} value={rateMin} onChange={(e) => setRateMin(Number(e.target.value))}
+                className="w-20 rounded-[10px] border-[1.5px] border-[color:var(--border-2)] px-3 py-2 text-[14px] font-bold outline-none focus:border-amber" />
+              <span className="text-sm text-soft">to ₹</span>
+              <input type="number" min={1} value={rateMax} onChange={(e) => setRateMax(Number(e.target.value))}
+                className="w-20 rounded-[10px] border-[1.5px] border-[color:var(--border-2)] px-3 py-2 text-[14px] font-bold outline-none focus:border-amber" />
+              <span className="text-sm text-soft">/min</span>
+            </div>
+          </Field>
+
           <Field label="Free first-call minutes" hint="Free minutes on a buyer's first completed call (0 disables the offer). The platform absorbs this — advisors are only paid on billed minutes.">
             <div className="flex items-center gap-2">
               <input
@@ -122,6 +139,8 @@ export function SettingsView() {
                 walletRechargeMinPaise: rupeesToPaise(minRupees),
                 walletRechargeMaxPaise: rupeesToPaise(maxRupees),
                 freeFirstCallMinutes: freeMinutes,
+                advisorRateMinPaise: rupeesToPaise(rateMin),
+                advisorRateMaxPaise: rupeesToPaise(rateMax),
               })
             }
           >

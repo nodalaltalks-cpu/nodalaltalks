@@ -41,6 +41,7 @@ export function buildAdvisorOnboardingDeps(): SubmitAdvisorApplicationDeps {
     payouts: new FirestorePayoutAccountRepository(db),
     storage: new FirebaseStorageService(storage),
     hash: hashService,
+    settings: new FirestoreSystemSettingsRepository(db),
     events: getEventRepository(),
   };
 }

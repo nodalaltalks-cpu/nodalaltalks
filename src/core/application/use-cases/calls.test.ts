@@ -117,6 +117,8 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number; a
         walletRechargeMinPaise: 10_000,
         walletRechargeMaxPaise: 5_000_000,
         freeFirstCallMinutes: opts.freeFirstCallMinutes ?? 0,
+        advisorRateMinPaise: 3_000,
+        advisorRateMaxPaise: 12_000,
         updatedAt: 0,
       }),
       update: async () => {},
@@ -137,6 +139,11 @@ function harness(opts: { walletBalancePaise?: number; commissionRate?: number; a
         const w = wallets.get(settlement.buyerId)!;
         if (w.balancePaise < settlement.amountChargedPaise) throw new Error("Insufficient wallet balance.");
         w.balancePaise -= settlement.amountChargedPaise;
+        return { balanceAfterPaise: w.balancePaise, transactionId: `txn_${++n}` };
+      },
+      refund: async (buyerId, amountPaise) => {
+        const w = wallets.get(buyerId)!;
+        w.balancePaise += amountPaise;
         return { balanceAfterPaise: w.balancePaise, transactionId: `txn_${++n}` };
       },
     },

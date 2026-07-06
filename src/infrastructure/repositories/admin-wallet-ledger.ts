@@ -26,6 +26,10 @@ export class AdminWalletLedger implements WalletLedger {
     return this.move(buyerId, -amountPaise, "call_debit", entry);
   }
 
+  refund(buyerId: string, amountPaise: number, entry: LedgerEntry): Promise<LedgerResult> {
+    return this.move(buyerId, amountPaise, "refund", entry);
+  }
+
   async settleCall(settlement: CallSettlement): Promise<LedgerResult> {
     const { buyerId, advisorId, callId, amountChargedPaise, advisorPayoutPaise } = settlement;
     const walletRef = this.db.collection(COLLECTIONS.WALLETS).doc(buyerId);
@@ -102,8 +106,11 @@ export class AdminWalletLedger implements WalletLedger {
       const next = current + deltaPaise;
       if (next < 0) throw new Error("Insufficient wallet balance.");
 
+      // Only genuine recharges count toward lifetime-recharged (feeds ARPU/
+      // segmenting) — a refund credit must not inflate it.
       const totalRecharged =
-        ((data?.totalRechargedPaise as number) ?? 0) + (deltaPaise > 0 ? deltaPaise : 0);
+        ((data?.totalRechargedPaise as number) ?? 0) +
+        (type === "recharge" && deltaPaise > 0 ? deltaPaise : 0);
       const status = (data?.status as string) ?? "active";
       if (status === "frozen") throw new Error("Wallet is frozen.");
 

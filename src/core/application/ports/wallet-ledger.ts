@@ -27,6 +27,9 @@ export interface WalletLedger {
   credit(buyerId: string, amountPaise: number, entry: LedgerEntry): Promise<LedgerResult>;
   /** Debits the wallet; throws on insufficient balance. */
   debit(buyerId: string, amountPaise: number, entry: LedgerEntry): Promise<LedgerResult>;
+  /** Founder-initiated refund credit — same atomic wallet+transaction write,
+   *  recorded with type "refund" so it never inflates recharge/GMV numbers. */
+  refund(buyerId: string, amountPaise: number, entry: LedgerEntry): Promise<LedgerResult>;
   /**
    * Debits the buyer for a completed call and records the advisor's payout line
    * in the SAME Firestore transaction — a charge must never exist without its

@@ -20,6 +20,7 @@ import type {
   RuntimeContext,
   SessionProvider,
   StorageService,
+  SystemSettingsRepository,
 } from "../ports";
 
 /**
@@ -103,6 +104,7 @@ export interface SubmitAdvisorApplicationDeps {
   payouts: PayoutAccountRepository;
   storage: StorageService;
   hash: HashService;
+  settings: SystemSettingsRepository;
   events: EventRepository;
 }
 
@@ -120,6 +122,19 @@ export async function submitAdvisorApplication(
   const { ids, clock, advisors, properties, documents, payouts, storage, hash, runtime } = deps;
   const advisorId = actor.uid;
   const now = clock.now();
+
+  // Rate bounds are a BUSINESS rule (settings-driven), not a UI nicety — a
+  // scripted client bypassing the form must not be able to list at ₹10,000/min.
+  const settings = await deps.settings.get();
+  if (
+    !Number.isInteger(input.rate.ratePerMinPaise) ||
+    input.rate.ratePerMinPaise < settings.advisorRateMinPaise ||
+    input.rate.ratePerMinPaise > settings.advisorRateMaxPaise
+  ) {
+    throw new Error(
+      `Rate must be between ₹${settings.advisorRateMinPaise / 100} and ₹${settings.advisorRateMaxPaise / 100} per minute.`,
+    );
+  }
 
   const emit = createEventEmitter(
     { id: advisorId, type: "advisor" },
