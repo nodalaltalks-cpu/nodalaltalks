@@ -1,121 +1,110 @@
-# NEXT_SESSION.md — Start Here
+# NEXT_SESSION.md — Final Session Handover
 
-**Written:** 2026-07-05, at the end of the session that built Features 7–16, the handover doc set, and the live app audit.
+**Written:** 2026-07-06, at the end of the session that executed the full M0–M15 beta implementation plan.
 **Audience:** a brand-new Claude Code session (or human engineer) with zero prior chat history.
-**Rule #1 of this document: read it fully before writing any code.**
+**Read this fully before writing any code.** Then read [PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md) and [ENGINEERING_DECISIONS.md](./ENGINEERING_DECISIONS.md).
 
 ---
 
-## 1. Current project status
+## 1. Current git branch
+`develop` (checked out). `main` exists but is behind — merge `develop → main` at the next stable milestone.
 
-NoDalalTalks is a buyer-to-buyer real estate consultation marketplace (India). Buyers pay per minute to talk to verified existing owners of the property they're evaluating. The codebase is a production-grade Next.js 15 + Firebase app built on strict Clean Architecture with an append-only event log (`analytics_events`) as the single source of dashboard truth.
+## 2. Latest commit hash
+`e922381` — "Feature(M14): settings-driven advisor rate bounds; founder refund endpoint". Tag **`beta-ready`** points here. Working tree clean (only untracked `.claude/`, local tool config — leave it untracked).
 
-- **Phase 1 (Foundation) — complete.** Auth, Firestore, Storage, Advisor Onboarding, Buyer Flow, Documents Dashboard, Founder Dashboard.
-- **Phase 2 (Transactions) — complete.** Wallet, Calls, Reviews, Notifications.
-- **Phase 3 (Intelligence) — complete.** Marketplace / Buyer+Revenue / Advisor / Business Intelligence, all as derived metrics on the Founder Dashboard.
-- **Phase 4 (AI) — deliberately unscoped.** Only architecture prep exists (Features 14–15). Do not start AI work without an explicit product decision — see [AI_ROADMAP.md](./AI_ROADMAP.md).
+## 3. Latest milestone completed
+**M15 — the final milestone.** All 16 milestones (M0–M15) of the beta implementation plan are done, one commit each (`git log d27eab7..e922381`). M15 was the dress rehearsal: the full journey (verifier activates advisor → activation notification → advisor goes online → buyer recharges ₹500 → **free-first-minutes call billed ₹0** → 5-star review folds into the rating atomically → founder cockpit shows TCM=1 and Inbox-zero) passed end-to-end against the Firebase emulator through the real UI, with zero fixes needed.
 
-Last commit: `b1208ae` — "Fix: signed-out buyers couldn't view advisor profiles".
-Test suite: **42/42 passing.** `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+## 4. Current project status
+Feature-complete for a 20-advisor / 100-buyer invite-only beta, pending only the founder's Firebase console actions (§8). 51/51 tests, typecheck/lint/build green. Phases 1–3 of the original roadmap complete; Phase 4 (AI) deliberately unscoped (see [AI_ROADMAP.md](./AI_ROADMAP.md)). Sixteen numbered features + fourteen beta milestones shipped; every commit message documents what was verified and how.
 
-## 2. What has been completed
+## 5. Remaining work
+- **Founder-blocked (not code):** M0 console steps (§8), then one real phone-OTP signup pass.
+- **Post-beta engineering** (see [ROADMAP.md](./ROADMAP.md)): real payment provider (Razorpay), real calling (Agora/Twilio — calls currently simulated, clearly labeled), FCM push, pagination, server-side `project()` via Cloud Functions, `builders`/`projects` reference data, referral system, replace the provisional landing copy with the founder's approved prototype.
 
-Sixteen numbered features (see README.md "Build status" — it is the living changelog and matches `git log`). Every feature: implemented, unit-tested where logic warranted it, committed with a descriptive message, and recorded in the README. Additionally this session: the Firebase Local Emulator Suite was made to actually run on this machine (JDK 21 installed at `C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot`, `firebase-tools` added as a dev dependency), two real Security-Rules bugs were found via live testing (one fixed and committed, one still open — see §5), and a full 8-document handover set plus a live app audit were written.
+## 6. Exact next task
+1. Founder performs §8's console steps.
+2. Verify phone-OTP buyer signup end-to-end on the real project with a real phone — the ONLY journey piece never live-verified (emulator-blocked, see §18).
+3. Then run the human beta test: ~20 advisors, ~100 buyers, following the M15 rehearsal script (activate → online → recharge → call → review → cockpit).
 
-## 3. What has been tested
+## 7. Production blockers
+- No real Firebase project (§8) — hard blocker.
+- Phone-OTP unverified on a real project — hard blocker for the buyer funnel.
+- Real money and real audio are deliberately deferred: placeholder payments and simulated calls are **honestly labeled in the UI** (M4) and fine for beta; they block *full* production, not beta.
 
-Three distinct tiers — do not conflate them:
+## 8. Firebase setup still required (founder's Google account needed — cannot be automated)
+Step-by-step runbook lives at the top of **`.env.example`**. Summary: create project → enable Phone + Email/Password auth (**Phone SMS requires the Blaze plan since 2024** — card on file, ~₹1/SMS, trivial at beta scale) → create Firestore + Storage → copy web-app config into `.env.local` → generate service-account key into `FIREBASE_SERVICE_ACCOUNT` → `npx firebase login` → `npx firebase use <id>` → `npx firebase deploy --only firestore:rules,firestore:indexes,storage` → set `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false`, `NEXT_PUBLIC_EVENT_BACKEND=firestore`.
 
-1. **Unit-tested (42 tests, all passing):** all `src/core` use cases and projections — billing math, commission splits, review aggregation, event emission, wallet credit/debit, verification workflow, the `project()` reducer, trend comparison, SHA-256 hashing.
-2. **Live-verified against the Firebase Emulator Suite (browser, real Firestore reads/writes):** `/buyer` search with real data; `/buyer/advisor/[id]` as a signed-out visitor (confirming the properties-rules fix); `/advisor/onboarding` step-1 rendering; all auth gates (`/buyer/wallet`, `/buyer/notifications`, `/founder`, `/founder/settings`, `/verifier/documents`, `/buyer/call/[id]`) behave correctly for signed-out visitors.
-3. **NOT yet tested live, end-to-end:** the complete authenticated journey (signup → onboard → verify → recharge → call → review → dashboard). Blocked by two things: phone-OTP is flaky against the fake `demo-` emulator project (environment-specific, not an app bug), and **there is no staff login UI at all** (see §5).
+## 9. Deployment status
+**Not deployed anywhere.** No hosting configured. Recommended: Vercel hobby tier (free) for the Next.js app; Firebase rules/indexes deploy via the CLI (§8). No CI/CD exists.
 
-Full page-by-page detail: [APP_AUDIT.md](./APP_AUDIT.md).
+## 10. How to run locally
+Requires Node (v26 installed), a JRE for emulators (Microsoft OpenJDK 21 installed at `C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot` — not on PATH; set `JAVA_HOME`/`PATH` inline). `firebase-tools` is a dev dependency (use `npx firebase`). Full instructions incl. emulator gotchas and seeding guidance: [PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md). Emulator data is **in-memory — lost on every restart**; write ad-hoc seed scripts with `firebase-admin` in the repo root and **delete them before committing**.
 
-## 4. What is production ready
+## 11. Commands to start the app
+```bash
+# terminal 1 — emulators (set JAVA_HOME first on this machine):
+export JAVA_HOME="/c/Program Files/Microsoft/jdk-21.0.11.10-hotspot"; export PATH="$JAVA_HOME/bin:$PATH"
+npx firebase emulators:start --only auth,firestore,storage --project demo-nodalaltalks
+# terminal 2:
+npm run dev          # http://localhost:3000 — emulator UI at http://127.0.0.1:4000
+```
+**⚠ Never run `npm run build` while `npm run dev` is running** — they share `.next` and corrupt it (bitten twice this session). Stop dev first, or `rm -rf .next` and restart dev after building.
 
-- `/buyer` (advisor search) and `/buyer/advisor/[id]` (profile) — ready at current scale.
-- The entire `src/core` layer — pure, tested, framework-free.
-- Firestore/Storage Security Rules — well-designed, though treat any change to them as a security review.
-- The event log + `project()` metrics pipeline — correct and tested; the client-side-replay approach is fine until data volume grows (migration path already designed, see ARCHITECTURE.md).
+## 12. Commands to run tests
+```bash
+npm run typecheck && npm run lint && npm test && npm run build   # all four before EVERY commit
+```
+51 tests, Vitest, all green at handover.
 
-**Not production ready:** everything involving real money (placeholder payment gateway), real audio (placeholder call service), real push (console notification service), the landing page (dev placeholder), and anything requiring staff sign-in (no login UI exists).
+## 13. Founder login flow
+`/staff/login` → email + password → role-routed to `/founder` (cockpit; action inbox on top, ⚙ Settings link → `/founder/settings`). Founder role comes from the `role` custom claim. **Bootstrap problem:** the first founder account cannot be created through the app — create the Auth user and set `{ role: "founder" }` via a one-off `firebase-admin` script (documented in [ENGINEERING_DECISIONS.md](./ENGINEERING_DECISIONS.md)). Emulator test account used this session: `founder@test.local` / `TestPass123!` (recreate after every emulator restart).
 
-## 5. What is blocked
+## 14. Advisor login flow
+**Advisor is a capability, not a role or separate account** (M5 — see §19). Advisors sign in exactly like buyers (phone OTP at `/buyer/signup`). Their advisor mode lives at `/advisor/dashboard`: status card, earnings, call history, and the **online/offline toggle** (they must consciously go online before calls can reach them). Entry: onboarding success panel ("Track your application") or direct URL. Verifier test account: `verifier@test.local` / `TestPass123!` (emulator, same caveat).
 
-| Blocker | What it blocks | Nature |
-|---|---|---|
-| **No staff login page** — `AuthService.signInWithEmail` is implemented but no UI calls it | `/verifier/documents` (⇒ no advisor can ever be activated ⇒ no marketplace supply), `/founder`, `/founder/settings` | **Pure engineering gap — nothing external needed. Fix first.** |
-| Phone-OTP flakiness in emulator | Live e2e verification of the buyer funnel | Environment-only (fake `demo-` project has no reCAPTCHA site key). Needs a **real Firebase project** (free Spark tier works; phone auth has a free daily quota) to fully verify. |
-| Founder Dashboard fires a Firestore listener before its auth check | Console `permission-denied` spam for every unauthorized visitor to `/founder` | Small known bug, diagnosed, fix is scoped (gate `useMetrics`/`useWeeklyTrend` behind the role check). |
-| Placeholder payment gateway | Real money | Paid third-party (Razorpay/Stripe). Postpone. |
-| Placeholder call service | Real audio calls — the core product mechanic | Paid third-party (Agora/Twilio). Postpone. |
+## 15. Buyer login flow
+`/buyer/signup` ("Sign up or log in" — phone OTP is both): phone → OTP → details (`registerBuyer` writes `users/{uid}` + emits `buyer_signup`). Supports `?next=` return paths — "Talk Now" on an advisor profile sends signed-out buyers here and returns them to the profile after (M10). Browsing (`/buyer`, advisor profiles) requires **no auth** — protect that property.
 
-## 6. Highest-priority tasks, in exact order
+## 16. All environment variables required
+See `.env.example` (authoritative, with the production runbook). Summary:
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_USE_FIREBASE_EMULATORS`, `FIREBASE_SERVICE_ACCOUNT` (server-only; empty against emulators), `NEXT_PUBLIC_EVENT_BACKEND` (`local`|`firestore`), `PAYMENT_PROVIDER` (`placeholder`), `CALL_PROVIDER` (`placeholder`). Emulator mode additionally: `GCLOUD_PROJECT=demo-nodalaltalks`, `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`, `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`, `FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199`, and fake-but-non-empty `NEXT_PUBLIC_FIREBASE_*` values (see PROJECT_HANDOVER.md).
 
-1. **Fix the Founder Dashboard listener-before-gate bug** (`src/presentation/features/founder/FounderDashboard.tsx` — `useMetrics()`/`useWeeklyTrend()` run before the `isAdminRole` check). Small, isolated, already diagnosed.
-2. **Build the staff login page** (email/password via the existing `AuthService.signInWithEmail`). Unblocks three pages and the entire advisor-supply pipeline. Suggested route: `/staff/login` or `/login`.
-3. **Enforce advisor rate bounds server-side** in `submitAdvisorApplication` (₹30–₹120/min currently UI-only).
-4. **Live end-to-end verification** of the full journey against the emulator (staff parts now possible after #2; buyer OTP parts against a real Firebase project when available).
-5. **Replace the landing page** (`src/app/page.tsx`) — currently a "Feature 1" dev banner. The original brief references an approved "Landing Website" prototype; ask the founder for it rather than redesigning.
-6. **Advisor dashboard** (call history, earnings, notifications) — advisors currently fly blind after onboarding.
-7. Then: [ROADMAP.md](./ROADMAP.md) medium-term items (server-side `project()`, pagination, reference-data collections, referrals).
+## 17. Current architecture assumptions
+- Clean Architecture, dependency rule absolute: **`src/core` never imports Firebase/Next/React** (full detail: [ARCHITECTURE.md](./ARCHITECTURE.md), [DATABASE.md](./DATABASE.md), [API_REFERENCE.md](./API_REFERENCE.md)).
+- Append-only `analytics_events` is the single source of dashboard truth; `project()` (pure reducer) derives every metric, currently replaying the full log client-side (fine at beta scale; Cloud Function migration path pre-designed).
+- No Cloud Functions — all privileged logic runs in Next.js API routes with the Admin SDK via `server-composition.ts`.
+- Money = integer paise everywhere; rupees only at presentation/analytics boundaries.
+- Anything touching money or rules-protected aggregates goes through a `*Ledger` port (Admin-SDK-only, atomic Firestore transaction).
+- Business rules (commission %, wallet limits, rate bounds, free first minutes) live in `system_settings/global` (world-readable, admin-writable), founder-editable with in-code defaults.
 
-## 7. Tasks requiring paid third-party services — POSTPONE these
+## 18. Known bugs
+- **Phone-OTP flaky against emulators only**: fake `demo-` projects have no reCAPTCHA site key; `appVerificationDisabledForTesting` is already set and a 25s timeout surfaces the failure, but the browser flow remains unreliable in the emulator. The Auth Emulator's REST API works (see PROJECT_HANDOVER.md). **Expected to vanish on a real project — verify there before calling it fixed.**
+- Cosmetic: `/buyer/call/[id]` says "Call not found" for permission-denied as well as genuinely missing calls.
+- Dev-environment only: the `.next` build/dev conflict (§11).
+- Historical note: a critical silent-event-loss bug (client SDK throwing on nested `undefined` in event props) was found and fixed this session (`0f5bdd8`) — if events ever seem to go missing again, read that commit first.
 
-| Task | Service | Cost trigger |
-|---|---|---|
-| Real audio calls + recording | Agora or Twilio | Per-minute usage fees; recording storage |
-| Real payments | Razorpay (India-first) or Stripe | Transaction fees; KYC/business onboarding |
-| Real SMS OTP at scale | Firebase phone auth beyond free tier / dedicated SMS provider | Per-SMS fees (small free daily quota exists on Firebase) |
-| Real push notifications | Firebase Cloud Messaging | Free, but only worth wiring once there's a real user base — postpone as low-value, not costly |
-| Email notifications | SendGrid or similar | Free tiers exist; no adapter exists yet either way |
+## 19. Important decisions that must never be changed (full rationale: ENGINEERING_DECISIONS.md)
+1. **Advisor is a capability of a buyer identity, not a role claim** — claims are for staff privilege only. Never reintroduce an "advisor" claim.
+2. **The event log is append-only**; never rename/repurpose a verb in `event-names.ts`; never hardcode a dashboard value — extend `project()`.
+3. **Client-side Firestore writes of nested data must pass through `pruneUndefinedDeep`** (the `0f5bdd8` lesson).
+4. **Server-owned collections stay server-owned** (wallets, transactions, reviews); `*Ledger` writes stay atomic.
+5. **Ports are defined next to their first real consumer** — no speculative interfaces (no `AIInsightsService` until a real caller exists).
+6. **No AI work without explicit scoping** ([AI_ROADMAP.md](./AI_ROADMAP.md)).
+7. **Placeholder adapters are deliberate** (payments/calling/push) — swap via composition roots, never restructure around them; keep the honest beta labeling until real providers land.
+8. Commit style: one milestone/feature per commit, all four checks green, message states honestly what was and wasn't verified.
 
-**All of these are behind ports (`PaymentGateway`, `CallService`, `NotificationService`)** — when the subscriptions are eventually purchased, each is an adapter swap with zero changes to business logic. Do not restructure anything in anticipation.
+## 20. Ready-to-paste prompt for the next Claude Code session
 
-## 8. Tasks that can continue with NO paid subscriptions
-
-Everything in §6. Specifically: the listener-gate fix, staff login page, server-side rate validation, the landing page, the advisor dashboard, pagination, server-side `project()` via emulated Cloud Functions, reference-data (`builders`/`projects`) collections, the referral system, and all emulator-based testing. A free-tier (Spark) Firebase project also unblocks real phone-OTP verification at small scale for free.
-
-## 9. Current Git workflow
-
-- **Branches:** `main` and `develop`, both currently at the same commit (`b1208ae`), with remotes on GitHub (`origin` → `github.com/nodalaltalks-cpu/nodalaltalks`). **Current checkout: `develop`.**
-- **Convention going forward:** work on `develop`, merge to `main` at stable milestones. (Note: history to date was committed directly to `main` before `develop` existed — that's fine, don't rewrite it.)
-- **Commit style:** one feature per commit, descriptive multi-paragraph messages that state what was verified and how (read `git log` for examples — the honesty about verification status in those messages is a deliberate convention, keep it).
-- **Uncommitted right now:** the 9 handover/audit markdown docs (`ARCHITECTURE.md` modified + 8 new). **First action of the next session: commit these docs** — they are the handover itself and must not be lost.
-- `.claude/` (local tool config) stays untracked. `firebase-debug.log`/`firestore-debug.log` are gitignored.
-
-## 10. Read these documents BEFORE touching code, in this order
-
-1. **This file** (NEXT_SESSION.md).
-2. [PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md) — how to run everything locally (emulator setup, env vars, seeding, known gotchas), team conventions.
-3. [COMPLETE_PROJECT_STATE.md](./COMPLETE_PROJECT_STATE.md) — full feature-by-feature status, known bugs, technical debt, executive summary scores.
-4. [ARCHITECTURE.md](./ARCHITECTURE.md) — Clean Architecture layers, the event-sourcing model, every port. **The dependency rules in here are non-negotiable.**
-5. [APP_AUDIT.md](./APP_AUDIT.md) — live page-by-page audit with beta-launch priority ranking.
-6. As needed: [DATABASE.md](./DATABASE.md) (before touching any Firestore collection or rule), [API_REFERENCE.md](./API_REFERENCE.md) (before adding routes/use cases/hooks), [ENGINEERING_DECISIONS.md](./ENGINEERING_DECISIONS.md) (before "improving" anything that looks odd — it is probably deliberate), [ROADMAP.md](./ROADMAP.md) + [AI_ROADMAP.md](./AI_ROADMAP.md) (before planning new work).
-
-Also: README.md's "Build status" section is the living changelog — update it when you ship a feature.
-
-## 11. Rules for future development
-
-1. **Never refactor working code without a driving requirement.** Especially: do not "clean up" the placeholder adapters, the paise-based money math, the event envelope, or anything documented in ENGINEERING_DECISIONS.md. If something looks strange, check that file first — every strange-looking thing so far has been deliberate.
-2. **`src/core` never imports Firebase, Next, or React.** No exceptions. New external capability ⇒ new port, defined next to its first real consumer — never speculatively.
-3. **Always test before committing:** `npm run typecheck && npm run lint && npm test && npm run build` must all pass. This has been true for every commit to date; keep the streak.
-4. **Commit by milestone:** one coherent feature/fix per commit, descriptive message, state honestly what was and wasn't verified (unit tests vs. live emulator vs. not at all). Update README.md's changelog in the same or an adjacent commit.
-5. **Money and role-protected aggregates are server-only**, via a `*Ledger` port + Admin-SDK adapter, atomic in one Firestore transaction. Clients never write them.
-6. **Never hardcode a dashboard value** — extend `project()`. And before writing a new projection, grep `metrics.types.ts` against `FounderDashboard.tsx`: three past features turned out to be "surface an already-computed field."
-7. **Any Security Rules change is a security review.** Live-test affected pages against the emulator — two real rules bugs were only ever found this way, never by unit tests.
-8. **No AI work without explicit scoping.** See AI_ROADMAP.md for why and what "scoped" means.
-9. **Never rename or repurpose an existing event verb** in `event-names.ts` — the log is append-only history.
-10. **Delete throwaway scripts** (seeding, token-minting) before committing; don't ship session tooling.
-
-## 12. Exact first prompt for the next Claude Code session
-
-> Read NEXT_SESSION.md in the repo root, then PROJECT_HANDOVER.md and COMPLETE_PROJECT_STATE.md. Do not write any code until you've read all three.
+> Read NEXT_SESSION.md in the repo root fully, then PROJECT_HANDOVER.md and ENGINEERING_DECISIONS.md. Do not write or modify any code until you've read all three. The repo is at tag `beta-ready` on `develop` — all M0–M15 milestones are complete and the emulator dress rehearsal passed.
 >
-> Then, in order:
-> 1. Commit the 9 uncommitted handover/audit markdown documents (ARCHITECTURE.md + 8 new .md files) with the message "docs: complete engineering handover set".
-> 2. Fix the Founder Dashboard bug where `useMetrics()`/`useWeeklyTrend()` open a Firestore listener before the `isAdminRole` auth check (details in APP_AUDIT.md §9 and NEXT_SESSION.md §6.1). Verify the fix live against the Firebase Emulator Suite per PROJECT_HANDOVER.md's setup instructions — confirm the console `permission-denied` errors are gone for a signed-out visitor to /founder.
-> 3. Build the staff login page using the existing `AuthService.signInWithEmail` (NEXT_SESSION.md §6.2) — this unblocks the verifier and founder dashboards. Verify live by signing in as a seeded verifier and founder against the emulator.
+> Current state: everything is founder-blocked on Firebase console setup (NEXT_SESSION.md §8 — the runbook is in .env.example). If the founder has completed it, your tasks in order are:
+> 1. Verify `.env.local` points at the real project and rules/indexes are deployed (`npx firebase deploy --only firestore:rules,firestore:indexes,storage`).
+> 2. Live-verify phone-OTP buyer signup end-to-end on the real project — the only journey piece never verified live (emulator reCAPTCHA limitation, NEXT_SESSION.md §18).
+> 3. Bootstrap the real founder + verifier accounts via a one-off firebase-admin script (ENGINEERING_DECISIONS.md "Bootstrapping the first staff account"), then delete the script.
+> 4. Re-run the M15 rehearsal script against the real project: onboard advisor → verify/activate via /verifier/documents → advisor goes online → buyer recharges → free-first-minutes call → review → founder cockpit reflects it.
+> 5. Report readiness for the 20-advisor / 100-buyer human beta.
 >
-> Follow the development rules in NEXT_SESSION.md §11. Run typecheck, lint, test, and build before every commit. Do not start any Phase 4 / AI work.
+> If the founder has NOT completed the console setup, say so plainly, list their exact steps from .env.example, and pick up post-beta work from ROADMAP.md instead — do not fake or skip the real-project verification.
+>
+> Rules: follow NEXT_SESSION.md §19 without exception. Run `npm run typecheck && npm run lint && npm test && npm run build` before every commit (never build while dev is running). Work on `develop`; merge to `main` only at a stable milestone. Delete any ad-hoc seed scripts before committing.
